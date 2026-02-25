@@ -31,6 +31,39 @@ extern TransGem* g_LevelTransGems;    // Up to 64 gems D_8007571C
 extern int g_LevelTransChestDuration; // Duration for initial chest popup depending on collected gems D_80075740
 extern int g_NGemsSinceLevelEntry;    // Number of gems collected since level entry D_800756C8
 
+typedef struct {
+  int m_TextureAnimationCount;
+  void *m_TextureAnimations;
+  int m_ScrollingTextureCount;
+  void *m_ScrollingTextures;
+  int m_LowPolyAnimationCount;
+  void *m_LowPolyAnimations;
+  int m_LowColorAnimationCount;
+  void *m_LowColorAnimations;
+  int m_HighPolyAnimationCount;
+  void *m_HighPolyAnimations;
+  int m_HighColorAnimationCount;
+  void *m_HighColorAnimations;
+  int section7Count;
+  void *section7;
+  int section8Count;
+  void *section8;
+  int m_CollisionAnimationCount;
+  void *m_CollisionAnimations;
+} LevelAnimations;
+
+extern LevelAnimations D_80078560;
+
+typedef struct {
+  Vector3D m_StartingPosition;
+  Vector3D8 m_StartingRotation;
+  Tiledef m_FlameTexture;
+  Tiledef m_ShadowTexture;
+  Tiledef m_OrbAndEggSprite[10];
+  Tiledef m_SuperFlameTexture;
+  Tiledef m_SpecularMetalTexture;
+} LevelLayoutHeader;
+
 
 
 /// @brief Loads in a new sound table

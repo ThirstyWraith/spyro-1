@@ -3035,7 +3035,7 @@ dlabel D_8006F200
 /* 5FA14 8006F214 50740300 */ .word 0x00037450
 .size D_8006F200, . - D_8006F200
 
-dlabel D_8006F218
+dlabel g_GameOverRespawnPos /*Game Over Respawn Vecs*/
 /* 5FA18 8006F218 00000000 */ .word 0x00000000
 /* 5FA1C 8006F21C 00000000 */ .word 0x00000000
 /* 5FA20 8006F220 00000000 */ .word 0x00000000
@@ -3067,20 +3067,18 @@ dlabel D_8006F218
 /* 5FA88 8006F288 1A6A0000 */ .word 0x00006A1A
 /* 5FA8C 8006F28C 69310000 */ .word 0x00003169
 /* 5FA90 8006F290 6BB30000 */ .word 0x0000B36B
-/* 5FA94 8006F294 */ .short 0x70C5
-.size D_8006F218, . - D_8006F218
-
-dlabel D_8006F296
-/* 5FA96 8006F296 */ .byte 0x00
-/* 5FA97 8006F297 */ .byte 0x00
+/* 5FA94 8006F294 C5700000 */ .word 0x000070C5
 /* 5FA98 8006F298 633D0000 */ .word 0x00003D63
 /* 5FA9C 8006F29C 00000000 */ .word 0x00000000
 /* 5FAA0 8006F2A0 00000000 */ .word 0x00000000
 /* 5FAA4 8006F2A4 00000000 */ .word 0x00000000
+.size g_GameOverRespawnPos, . - g_GameOverRespawnPos
+
+dlabel g_GameOverRespawnRotZ /*Game Over Respawn Rotation Z*/
 /* 5FAA8 8006F2A8 00D40017 */ .word 0x1700D400
 /* 5FAAC 8006F2AC 40000035 */ .word 0x35000040
 /* 5FAB0 8006F2B0 40ED5000 */ .word 0x0050ED40
-.size D_8006F296, . - D_8006F296
+.size g_GameOverRespawnRotZ, . - g_GameOverRespawnRotZ
 
 dlabel g_GameOverTextXY
 /* 5FAB4 8006F2B4 */ .short 0x22CE

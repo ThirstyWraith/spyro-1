@@ -7,15 +7,21 @@
 #include "cutscene.h"
 #include "cyclorama.h"
 #include "dragon.h"
+#include "gamestates/draw.h"
 #include "environment.h"
+#include "gamepad.h"
 #include "graphics.h"
+#include "hud.h"
 #include "math.h"
 #include "memory.h"
 #include "moby_helpers.h"
 #include "music.h"
+#include "overlay_pointers.h"
+#include "renderers.h"
 #include "save_file.h"
 #include "spu.h"
 #include "spyro.h"
+#include "titlescreen.h"
 #include "variables.h"
 #include "wad.h"
 
@@ -352,8 +358,418 @@ Model *PatchMobyModelPointers(Model *pModel) {
 
 void func_8001364C(int pAnimationsAndSparx); /* Weird param, always 1 iirc */
 
+
+
+
+// DemoSpawnPosRot
+extern int D_8006EE9C[4][4];
+// SpawnedMobyAvailableSpot
+extern Moby *D_8007573C;
+// SpawnedMobyCount
+extern int D_800756A4;
+// Game over respawn positions
+extern Vector3D g_GameOverRespawnPos[12];
+// Game over respawn z rotations
+extern u_char g_GameOverRespawnRotZ[12];
+
+extern SphericalCoordsOffset D_80078668;
+
+extern SphericalCoordsOffset D_8006C934;
+
+extern int D_80075698;
+
+// Game Over Level Index
+extern int D_800757E8;
+
+extern int D_800758C0;
+extern int D_80075960;
+extern int D_800758A0;
+extern int D_80075700;
+// check size
+extern int D_8006EDB4[42];
+
+extern int D_80075678;
+extern int D_800777C0[10];
+// Particle start
+extern int *D_80075824;
+// Last Particle
+extern char *D_80075738;
+// Available spot for props of dynamically spawned Moby
+extern void *D_80075930;
+
+extern int *D_800756E8;
+extern int D_800756A8;
+extern int D_80075778;
+
 /// @brief Loads the level's layout
-INCLUDE_ASM_REORDER_HACK("asm/nonmatchings/loaders", func_8001364C);
+void func_8001364C(int pAnimationsAndSparx) { /* Weird param, always 1 iirc */
+  char *data;
+  int i;
+  int j;
+  Vector3D vec;
+  char *layout_start;
+  char *start;
+  int index;
+  int bit;
+  uint pendingDrops;
+  int btemp;
+
+  func_80056B28(0);  // stop all sounds
+  SpecularReset();
+
+  data = layout_start = (char *)g_Buffers.m_LevelLayout;
+
+  D_800758C8 = 0;
+  g_GameTick = 0;
+  g_IsSpyroHidden = 0;
+  g_TracerCount = 0;
+
+  if (g_LevelId == 64) {
+    D_80075830 = 0;
+  }
+
+  D_80075698 = 0;
+
+  if (g_LevelId == 40 || g_LevelId == 42) {
+    g_SkipLowPolyWorld = 1;
+  } else {
+    g_SkipLowPolyWorld = 0;
+  }
+
+  PadReset(&g_Pad);
+
+  if (g_IsFlightLevel == 0) {  // is not flight level
+    D_8007580C = g_Spyro.m_health;
+  }
+
+  if (g_Checkpoint.m_StoodOnCheckpoint) {
+    VecCopy(&g_Spyro.m_Position, &g_Checkpoint.m_StartingPosition);
+    g_Spyro.m_bodyRotation.z = g_Checkpoint.m_StartingRotation >> 4;
+  } else if (g_PortalLevelId == 0) {
+    setXYZ(&g_Checkpoint.m_StartingPosition,
+           ((LevelLayoutHeader *)data)->m_StartingPosition.x,
+           ((LevelLayoutHeader *)data)->m_StartingPosition.y,
+           ((LevelLayoutHeader *)data)->m_StartingPosition.z);
+    g_Checkpoint.m_StartingRotation = ((LevelLayoutHeader *)data)->m_StartingRotation.z;
+
+    if (g_HasLevelTransition == 0 && g_Gamestate != 12) {
+      if (g_Gamestate == 5 && (g_LevelId >= 40 && g_LevelId < 60) && g_GameOverRespawnPos[D_800757E8 - 18].x != 0) {
+        VecCopy(&g_Spyro.m_Position, &g_GameOverRespawnPos[D_800757E8 - 18]);
+        g_Spyro.m_bodyRotation.z = g_GameOverRespawnRotZ[D_800757E8 - 18];
+      } else {
+        VecCopy(&g_Spyro.m_Position, &g_Checkpoint.m_StartingPosition);
+        g_Spyro.m_bodyRotation.z = g_Checkpoint.m_StartingRotation;
+      }
+    }
+  }
+
+  g_Spyro.m_health = D_8007580C;
+
+  if (g_Gamestate != 12) {
+    // reset spyro
+    func_8004AC24(0);
+    g_Spyro.m_noGamepadUpdateFrames = 12;
+  }
+
+  if (g_LevelId % 10 == 5) {
+    g_IsFlightLevel = 1;  // is flight level
+    g_Spyro.m_flyingAbility = 1;
+    D_800758C0 = g_Checkpoint.m_StartingPosition.z;
+    g_Spyro.m_highestFlightPoint = g_Checkpoint.m_StartingPosition.z;
+
+    // change spyro state
+    func_8003EA68(0x20);
+    if (g_HasLevelTransition == 0) {
+      g_Spyro.m_walkingState = 0;
+      g_Spyro.m_bodyRotation.x = 0;
+      g_Spyro.m_bodyRotation.y = 0;
+      g_Spyro.m_Physics.m_SpeedAngle.m_RotY = 0;
+      g_Spyro.m_Physics.m_SpeedAngle.m_RotX = 0;
+      D_80075960 = 0;
+      D_800758A0 = 0;
+      D_80075700 = 0;
+      g_Spyro.m_Position.z = g_Spyro.m_Position.z + -0x400;
+    }
+  } else {
+    g_IsFlightLevel = 0;  // is not flight level
+    g_Spyro.m_flyingAbility = 0;
+    if (g_HasLevelTransition != 0) {
+      g_Checkpoint.m_StartingPosition.z += D_8006EDB4[g_LevelIndex];
+      g_Checkpoint.m_StartingPosition.x -= ((u_short)COSINE_8(g_Checkpoint.m_StartingRotation) << 16) >> 18;
+      g_Checkpoint.m_StartingPosition.y -= ((u_short)SINE_8(g_Checkpoint.m_StartingRotation) << 16) >> 18;
+    }
+  }
+
+  data += 16;
+
+  if (g_LevelId == 64) {
+    D_800758C0 = 16000;
+    D_80075678 = 17976;
+  }
+
+  g_Fade = 0;
+  if (g_HasLevelTransition == 0 && g_Gamestate != 12) {
+    D_80078668 = D_8006C934;
+
+    g_Camera.m_Focus = &g_Spyro.m_Position;
+    g_Camera.m_State = 0;
+    g_Camera.unk_0xC0 = 0;
+    D_80078668.m_Coords.radius = 0x600;
+    g_Camera.m_SphericalPreset = &D_80078668;
+    g_Camera.m_FocusRotation = g_Spyro.m_Physics.m_SpeedAngle.m_RotZ;
+
+    // reset some camera stuff
+    func_80034358();
+    g_Fade = 0x20;  // fade
+  }
+  if (g_Gamestate != 12) {
+    g_Gamestate = 0;
+    g_StateSwitch = 1;
+    g_ScreenBorderEnabled = 0;
+    D_800756C0 = 0;
+  }
+
+  Memset(&g_SpyroFlame, 0, sizeof(g_SpyroFlame));
+  g_SpyroFlame.m_FlameTexture.uv0.all = *(int *)data;
+  g_SpyroFlame.m_FlameTexture.uv1.all = *(int *)(data + 4);
+  Memset(&g_SpyroShadow, 0, sizeof(g_SpyroShadow));
+
+  data += 8;
+  D_80075EF8.shadow.uv0.all = *(int *)data;
+  D_80075EF8.shadow.uv1.all = *(int *)(data + 4);
+  data += 8;
+  g_Hud.m_OrbAndEggSprite[0].uv0.all = *(int *)(data + 8);
+  g_Hud.m_OrbAndEggSprite[0].uv1.all = *(int *)(data + 12);
+
+  for (i = 0; i < 9; i++) {
+    g_Hud.m_OrbAndEggSprite[i + 1].uv0.all = ((Tiledef *)data)[i + 2].uv0.all;
+    g_Hud.m_OrbAndEggSprite[i + 1].uv1.all = ((Tiledef *)data)[i + 2].uv1.all;
+  }
+
+  data += 88;
+  g_SpyroFlame.m_SuperFlameTexture.uv0.all = *(int *)data;
+  g_SpyroFlame.m_SuperFlameTexture.uv1.all = *(int *)(data + 4);
+
+  data += 8;
+  D_800756F0.uv0.all = *(int *)data;
+  D_800756F0.uv1.all = *(int *)(data + 4);
+
+  data += 8;
+  start = data;
+  data += 4;
+  D_80078560.m_TextureAnimationCount = *(int *)data;
+  data += 4;
+  D_80078560.m_TextureAnimations = (void **)data;
+  for (i = 0; i < D_80078560.m_TextureAnimationCount; i++) {
+    *(int *)data = (int)start + 4 + *(int *)data;
+    data += 4;
+  }
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  D_80078560.m_ScrollingTextureCount = *(int *)data;
+  data += 4;
+  D_80078560.m_ScrollingTextures = (void **)data;
+  for (i = 0; i < D_80078560.m_ScrollingTextureCount; i++) {
+    *(int *)data = (int)start + 4 + *(int *)data;
+    data += 4;
+  }
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  D_80078560.m_HighPolyAnimationCount = *(int *)data;
+  data += 4;
+  D_80078560.m_HighPolyAnimations = (void **)data;
+  for (i = 0; i < D_80078560.m_HighPolyAnimationCount; i++) {
+    *(int *)data = (int)start + 4 + *(int *)data;
+    data += 4;
+  }
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  D_80078560.m_LowPolyAnimationCount = *(int *)data;
+  data += 4;
+  D_80078560.m_LowPolyAnimations = (void **)data;
+  for (i = 0; i < D_80078560.m_LowPolyAnimationCount; i++) {
+    *(int *)data = (int)start + 4 + *(int *)data;
+    data += 4;
+  }
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  D_80078560.m_CollisionAnimationCount = *(int *)data;
+  data += 4;
+  D_80078560.m_CollisionAnimations = (void **)data;
+  for (i = 0; i < D_80078560.m_CollisionAnimationCount; i++) {
+    *(int *)data = (int)start + 4 + *(int *)data;
+    data += 4;
+  }
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  D_80078560.m_HighColorAnimationCount = *(int *)data;
+  data += 4;
+  D_80078560.m_HighColorAnimations = (void **)data;
+  for (i = 0; i < D_80078560.m_HighColorAnimationCount; i++) {
+    *(int *)data = (int)start + 4 + *(int *)data;
+    data += 4;
+  }
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  D_80078560.m_LowColorAnimationCount = *(int *)data;
+  data += 4;
+  D_80078560.m_LowColorAnimations = (void **)data;
+  for (i = 0; i < D_80078560.m_LowColorAnimationCount; i++) {
+    *(int *)data = (int)start + 4 + *(int *)data;
+    data += 4;
+  }
+
+  data = start + *(int *)start;
+
+  if (pAnimationsAndSparx != 0) {
+    func_8002B4AC();
+  } else {
+    D_80078560.m_TextureAnimationCount = 0;
+    D_80078560.m_ScrollingTextureCount = 0;
+    D_80078560.m_CollisionAnimationCount = 0;
+    D_80078560.m_HighColorAnimationCount = 0;
+    D_80078560.m_LowColorAnimationCount = 0;
+  }
+  start = data;
+  data += 4;
+  i = *(int *)data;
+  data += 4;
+  g_LevelMobys = (Moby *)data;
+
+  data = start + *(int *)start;
+  D_80075890 = &g_LevelMobys[i];
+  D_8007573C = &g_LevelMobys[i];
+  g_LevelMobys[i].m_State = 0xFF;
+  D_800756A4 = 0;
+  D_800756E8 = (Moby *)data;
+  D_80075930 = data;
+  *(data - 1) = 0xFF;
+
+  D_800756A8 = (unsigned int)((char *)D_800756E8 - (char *)D_80075890) / 112;
+
+  data = data + *(int *)data;
+  start = data;
+  data += 4;
+  g_MobyPodCount = *(int *)data;
+  data += 4;
+  g_MobyPods = (u_short **)data;
+  for (i = g_MobyPodCount - 1; i >= 0; i--) {
+    PATCH_POINTER2((g_MobyPods)[i], (int)start);
+  }
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  D_80075778 = (int)data;
+
+  data = start + *(int *)start;
+  start = data;
+  data += 4;
+  for (i = 0; i < *(int *)start;) {
+    int *ptr = (int *)(layout_start + *(int *)data);
+    i++;
+    PATCH_POINTER2(ptr[0], layout_start);
+    data += 4;
+  }
+
+  if (g_DemoMode != 0) {
+    srand(0x4d2);
+    g_Spyro.m_Position.x = D_8006EE9C[g_DemoIndex][0];
+    g_Spyro.m_Position.y = D_8006EE9C[g_DemoIndex][1];
+    g_Spyro.m_Position.z = D_8006EE9C[g_DemoIndex][2];
+    g_Spyro.m_bodyRotation.z = D_8006EE9C[g_DemoIndex][3];
+    g_Spyro.m_Physics.m_SpeedAngle.m_RotZ = g_Spyro.m_bodyRotation.z << 4;
+    D_80075784 = 1;
+    // demo macro ptr
+    if (g_DemoMode == 1) {
+      D_8007585C = (int *)data;
+    } else {
+      D_8007585C = (int *)0x80600000;
+      Memset((void *)0x80600000, 0, 0x4000);
+    }
+  }
+
+  pendingDrops = 0;
+
+  for (i = 0; g_LevelMobys[i].m_State != 0xff; i++) {
+    if ((int)g_Models[g_LevelMobys[i].m_Class] < 0) {
+      func_800526A8(&g_LevelMobys[i]);
+    } else {
+      func_800529CC(&g_LevelMobys[i]);
+    }
+    VecCopy(&vec, &g_LevelMobys[i].m_Position);
+    vec.z += 0x400;
+    func_8004D5EC(&vec, 0x10000);
+    func_800533D0(&g_LevelMobys[i]);
+    if ((g_LevelMobys[i].m_DroppedFlag & 0x7f) < 0x20) {
+      index = i >> 5;
+      bit = i & 0x1f;
+      if (((g_Checkpoint.m_KilledMobysSaved[index] & (1 << bit)) == 0)
+      || ((D_80077908[g_LevelIndex][index] & (1 << bit)) == 0)) {
+      
+        pendingDrops |= 1 << (g_LevelMobys[i].m_DroppedFlag);
+      }
+    }
+  }
+
+  for (i = 0; g_LevelMobys[i].m_State != 0xff; i++) {
+    index = (i >> 5);
+    bit = (i & 0x1f);
+
+    if ((D_80077908[g_LevelIndex][index] & (1 << bit)) != 0) {
+      if ((g_Checkpoint.m_KilledMobysSaved[index] & (1 << bit)) == 0) {
+        if ((g_LevelMobys[i].m_DroppedFlag & 0x7F) == 0x7D) {
+          func_80052568(&g_LevelMobys[i]);
+        } else {
+          g_LevelMobys[i].m_DropMoby = -1;
+        }
+      } else {
+        bit = (g_LevelMobys[i].m_DroppedFlag & 0x7F);
+        if (bit < 32) {
+          btemp = (pendingDrops & (1 << bit)) != 0;
+        } else {
+          btemp = bit == 0x7e;
+        }
+        if (btemp) {
+          g_LevelMobys[i].m_DropMoby = -1;
+        } else {
+          func_80052568(&g_LevelMobys[i]);
+        }
+      }
+    }
+  }
+
+  for (i = 0; i < 8; i++) {
+    g_Checkpoint.m_KilledMobys[i] = g_Checkpoint.m_KilledMobysSaved[i];
+  }
+
+  for (i = 0; i < 10; i++) {
+    D_800777C0[i] = 0;
+  }
+
+  D_80075824 = (int *)g_Buffers.m_ParticleSpaceStart;
+  D_80075738 = g_Buffers.m_ParticleSpaceStart;
+  *(u_char *)((int)D_80075824 + 1) = -1;
+  D_80075824[0x800] = -1;
+  func_80058B68();
+  if ((pAnimationsAndSparx != 0) && (g_IsFlightLevel == 0)) {
+    g_Sparx = (*g_SpawnMoby)(120, 0);
+    HudReset(1);
+  }
+  func_800567F4(g_CdMusic.m_CurrentTrack, 1);
+}
 
 /// @brief Reload the current level's layout
 void func_800144C8(void) {

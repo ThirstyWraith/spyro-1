@@ -54,6 +54,31 @@ typedef struct {
 /// @brief Sparkle array
 extern Sparkle g_Sparkles[8];
 
+
+typedef struct {
+    int unk_00;
+    int unk_04;
+    int unk_08;
+    int unk_0c;
+    Vector3D m_Position;
+    int unk_1c;
+    int unk_20;
+    int m_IsSpyroOverWater;
+} SpyroShadow;
+
+extern SpyroShadow g_SpyroShadow;
+
+typedef struct {
+  Tiledef shadow;
+  int* shadow_list; // shadow list?
+} MobyShadow;
+extern MobyShadow D_80075EF8;
+
+// specular metal texture
+extern Tiledef D_800756F0;
+
+
+
 // r_cyclorama:
 
 /// @brief Renders the cyclorama / sky
