@@ -43,7 +43,7 @@ void SetNewSoundTable(char *pData, int pPatchAddressesInTable);
 /// @param pCutscene Whether it's scene data for a cutscene, which is missing
 /// collision and occlusion data
 /// @return The end of the scene data
-void *func_80012D58(void *pData, int pCutscene);
+void *func_80012D58(char *pData, int pCutscene);
 
 /// @brief Patches the pointers inside of Spyro's model
 // Has some cool code added after July

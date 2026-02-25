@@ -7,6 +7,7 @@
 #include "cutscene.h"
 #include "cyclorama.h"
 #include "dragon.h"
+#include "environment.h"
 #include "graphics.h"
 #include "math.h"
 #include "memory.h"
@@ -43,14 +44,178 @@ void SetNewSoundTable(char *pData, int pPatchAddressesInTable) {
   }
 }
 
+// particle related
+extern uint D_80076278[64];
+
 /// @brief Loads the level scene, as we used to call it
 /// @param pData The data to load
 /// @param pCutscene Whether it's scene data for a cutscene, which is missing
 /// collision and occlusion data
 /// @return The end of the scene data
-void *func_80012D58(void *pData, int pCutscene);
 /// @brief Loads the level scene, as we used to call it
-INCLUDE_ASM_REORDER_HACK("asm/nonmatchings/loaders", func_80012D58);
+void *func_80012D58(char *pData, int pCutscene) {
+  char *start;
+  int i;
+  int j;
+  
+  start = pData;
+  pData += 4;
+  
+  g_Environment.m_TextureCount = *(int *)pData;
+  pData += 4;
+  
+  g_Environment.m_LQTexturePointer = pData;
+  pData += 16 * g_Environment.m_TextureCount;
+  
+  g_Environment.m_HQTexturePointer = pData;
+  
+  pData = start + *(int *)start;
+  
+  start = pData;
+  pData += 4;
+  g_Environment.m_SectorCount = *(int *)pData;
+  pData += 4;
+  g_Environment.m_SectorPointer = pData;
+  
+  for (i = 0; i < g_Environment.m_SectorCount; i++) {
+    PATCH_POINTER(*(int *)pData, start + 4);
+    pData += 4;
+  }
+
+  pData = start + *(int *)start;
+  
+  if (!pCutscene) {
+    start = pData;
+    if (*(int *)pData >= 5) {
+      pData += 8;
+      g_Environment.m_OcclusionGroupCount = *(int *)pData;
+      pData += 4;
+      g_Environment.m_OcclusionGroups = (int *)pData;
+      
+      for (i = 0; i < g_Environment.m_OcclusionGroupCount; i++) {
+        PATCH_POINTER(*(int *)pData, start + 4);
+        pData += 4;
+      }
+
+      pData = *(int *)(start + 4) + 4 + start;
+      g_NewCyclorama.m_OcclusionGroupsCount = *(int *)pData;
+      pData += 4;
+      g_NewCyclorama.m_OcclusionGroups = pData;
+      
+      for (i = 0; i < g_NewCyclorama.m_OcclusionGroupsCount; i++) {
+        PATCH_POINTER(*(int *)pData, start + *(int *)(start + 4) + 4);
+        pData += 4;
+      }
+      
+    } else {
+      g_Environment.m_OcclusionGroupCount = 0;
+      g_Environment.m_OcclusionGroups = (void *)0;
+      g_NewCyclorama.m_OcclusionGroups = (void *)0;
+    }
+    
+    pData = start + *(int *)start;
+    
+    if (!pCutscene) {
+      start = pData;
+      pData += 4;
+      g_Environment.m_SurfaceCount = *(int *)pData;
+      pData += 4;
+      g_Environment.m_SurfaceData = (SpecialSurface **)pData;
+      
+      for (i = 0; i < g_Environment.m_SurfaceCount; i++) {
+        PATCH_POINTER(*(int *)pData, start + 4);
+        pData += 4;
+      }
+
+      pData = start + *(int *)start;
+    }
+    
+    if (!pCutscene) {
+      start = pData;
+      pData += 4;
+      
+      g_Environment.m_TerrainCollision = (TerrainCollision *)pData;
+
+      PATCH_POINTER(g_Environment.m_TerrainCollision->m_BlockTree, pData);
+      PATCH_POINTER(g_Environment.m_TerrainCollision->m_Blocks, pData);
+      PATCH_POINTER(g_Environment.m_TerrainCollision->m_Triangles, pData);
+      PATCH_POINTER(g_Environment.m_TerrainCollision->m_TriangleOcclusionAssignment, pData);
+      PATCH_POINTER(g_Environment.m_TerrainCollision->m_Flags, pData);
+          
+      pData = start + *(int *)start;
+    }
+  }
+  
+  start = pData;
+  pData += 4;
+  g_NewCyclorama.m_BackgroundColor.r = pData[0];
+  g_NewCyclorama.m_BackgroundColor.g = pData[1];
+  g_NewCyclorama.m_BackgroundColor.b = pData[2];
+  pData += 4;
+  g_NewCyclorama.m_SectorCount = *(int *)pData;
+  pData += 4;
+  g_NewCyclorama.m_Sectors = (void *)pData;
+  
+  for (i = 0; i < g_NewCyclorama.m_SectorCount; i++) {
+    PATCH_POINTER(*(int *)pData, start + 4);
+    pData += 4;
+  }
+
+  pData = start + *(int *)start;
+  
+  if (pCutscene) {
+    return (void *)pData;
+  } else {
+    g_PortalCount = *(int *)pData;
+    pData += 4;
+    
+    for (i = 0; i < g_PortalCount; i++) {
+      g_Portals[i] = (Portal *)pData;
+      pData = (char *)(&g_Portals[i]->m_Points[g_Portals[i]->m_PointCount - 1]);
+      g_Portals[i]->m_Skybox = (PortalDataSky *)pData;
+      pData += 20;
+      
+      start = pData;
+      pData += 4;
+      g_Portals[i]->m_Skybox->copyBgColor = *(int *)pData;
+      pData += 4;
+      g_Portals[i]->m_Skybox->copySectorCount = *(int *)pData;
+      pData += 4;
+      g_Portals[i]->m_Skybox->copySectors = (void *)pData;
+      
+      for (j = 0; j < g_Portals[i]->m_Skybox->copySectorCount; ++j) {
+        PATCH_POINTER(*(int *)pData, start + 4);
+        pData += 4;
+      }
+      
+      pData = start + *(int *)start;
+    }
+
+    start = pData;
+    pData += 4;
+    for (i = *(int *)pData, pData += 4; i > 0; i--) {
+      D_80076278[*(short *)pData] = (uint)pData;
+      pData = pData + *(short *)(pData + 2) + 4;
+    }
+
+    pData = start + *(int *)start;
+    start = pData;   
+
+    g_Spu.m_SoundTableSize = *(int *)start;
+    SetNewSoundTable(start + 4, 1);
+
+    // Necessary for match. Doesn't emit any assembly.
+    // Could there have been an alignment macro here?
+    // alternatively, use pData++, pData--;
+    pData = (char *)(((int)pData + 3) & ~3);
+
+    pData = start + *(int *)start;
+    
+    return (void *)pData;
+  }
+}
+
+
 
 /// @brief Patches the pointers inside of Spyro's model
 // Has some cool code added after July
@@ -713,7 +878,7 @@ void LoadLevel(int pArg) {
   int *pointerOffsetNew;
   int *pointerOffsetOld;
   int *dest;
-  int *portalCycloramaComponent;
+  PortalDataSky *portalCycloramaComponent;
   int cycloramaSize;
 
   // Wait for the CD subsystem to finish loading if the load stage is over 1
@@ -735,9 +900,9 @@ void LoadLevel(int pArg) {
       // The portal one has a bunch of duplicate values that aren't used by the
       // game as far as I could tell, so the component size is at + 0x14
       portalCycloramaComponent = g_Portals[D_8007576C]->m_Skybox;
-      pointerOffsetOld = &portalCycloramaComponent[5];
+      pointerOffsetOld = &portalCycloramaComponent->componentSize;
 
-      cycloramaSize = portalCycloramaComponent[5] + 1024;
+      cycloramaSize = portalCycloramaComponent->componentSize + 1024;
       dest = (int *)((char *)g_Buffers.m_LowerPolyBuffer - cycloramaSize);
       Memcpy(dest, portalCycloramaComponent, cycloramaSize);
 
@@ -756,10 +921,10 @@ void LoadLevel(int pArg) {
 
     } else {
 
-      portalCycloramaComponent = ((int *)g_Cyclorama.m_Sectors - 3);
-      pointerOffsetOld = portalCycloramaComponent;
+      portalCycloramaComponent = (PortalDataSky *)((int *)g_Cyclorama.m_Sectors - 3);
+      pointerOffsetOld = (int *)portalCycloramaComponent;
 
-      cycloramaSize = *portalCycloramaComponent + 1024;
+      cycloramaSize = portalCycloramaComponent->copySectorCount + 1024;
       dest = (int *)((char *)g_Buffers.m_LowerPolyBuffer - cycloramaSize);
       Memcpy(dest, portalCycloramaComponent, cycloramaSize);
 
