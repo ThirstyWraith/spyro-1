@@ -59,6 +59,7 @@ typedef struct {
   Vector3D8 m_StartingRotation;
   Tiledef m_FlameTexture;
   Tiledef m_ShadowTexture;
+  Tiledef unusedTexture;
   Tiledef m_OrbAndEggSprite[10];
   Tiledef m_SuperFlameTexture;
   Tiledef m_SpecularMetalTexture;
