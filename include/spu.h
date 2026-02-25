@@ -36,7 +36,7 @@ typedef struct {
   short unk_0x8;     // Named unusedVolume in my notes
   u_short m_Pitch;
   u_short m_PitchVariance;
-  short m_PitchMultiplier;
+  u_short m_PitchMultiplier;
 
   // 0: Positive and negative pitch variance
   // 1: Only positive pitch variance
@@ -82,7 +82,7 @@ extern struct {
 void SpuInitialize(void);
 
 /// @brief Plays a sound
-void PlaySound(u_int pSoundId, Moby *pMoby, u_int pFlags, u_char *pSoundRefOut);
+int PlaySound(u_int pSoundId, Moby *pMoby, u_int pFlags, u_char *pSoundRefOut);
 
 /// @brief Stops a sound
 void StopSound(u_int pVoice, u_int pType);

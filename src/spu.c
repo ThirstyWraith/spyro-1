@@ -63,7 +63,169 @@ void SpuInitialize() {
 }
 
 // Play sound
-INCLUDE_ASM_REORDER_HACK("asm/nonmatchings/spu", PlaySound);
+int PlaySound(u_int pSoundId, Moby *pMoby, u_int pFlags, u_char *pSoundRefOut) {
+  SpuVoiceAttr attr;
+  Vector3D vec;
+  int length;
+  int maxDist;
+  int i;
+  int voice_slot = -1;
+  int replacement_slot;
+  int angle = g_Camera.m_Rotation.z; 
+
+  switch (pFlags) {
+    case 4:
+      if (IsMobyPlayingSound(pMoby, pSoundId) == 2)
+        return 0;
+      break;
+    case 8:
+      if (IsMobyPlayingSound(pMoby, pSoundId) == 2)
+        return 0;
+
+      VecSub(&vec, &pMoby->m_Position, &g_Camera.m_Position);
+      VecShiftRight(&vec, 4);
+      length = VecMagnitude(&vec, 1) << 4;
+      
+      maxDist = pMoby->m_SoundDistance << 10;
+      
+      if (maxDist == 0)
+        maxDist = 0x4000;
+      
+      if (maxDist < length) {
+        if (pSoundRefOut != 0)
+          *pSoundRefOut = 0x7f;
+        return 0x7f;
+      }
+      break;
+    case 16:
+    default:
+      break;
+
+  }
+
+  replacement_slot = 256;
+
+  for (i = 0; i < 24; i++) {
+    if ((g_Spu.m_ActiveSounds[i].m_Flags & (0x80 | 0x40 | 0x1)) == 0) {
+      voice_slot = i;
+      break;
+    }
+    if (g_Spu.m_ActiveSounds[i].unk_0xC < g_Spu.m_ActiveSounds[replacement_slot].unk_0xC) {
+      replacement_slot = i;
+    }
+  }
+
+  if (voice_slot < 0)
+    return 0;
+
+  if (voice_slot != 24) {
+    g_Spu.m_ActiveSounds[voice_slot].m_Flags = pFlags | 1;
+    g_Spu.m_ActiveSounds[voice_slot].m_Moby = pMoby;
+    g_Spu.m_ActiveSounds[voice_slot].m_SoundId = pSoundId;
+
+    if ((g_Spu.m_NextSoundOverrideFlags & 2) != 0) {
+      g_Spu.m_NextSoundOverrideFlags &= ~2;
+      g_Spu.m_ActiveSounds[voice_slot].m_Pitch = g_Spu.m_PitchOverride;
+    } else {
+      g_Spu.m_ActiveSounds[voice_slot].m_Pitch = g_Spu.m_SoundDefinitions[pSoundId].m_Pitch;
+    }
+
+    attr.mask = SPU_VOICE_VOLL | SPU_VOICE_VOLR | SPU_VOICE_PITCH |SPU_VOICE_WDSA | SPU_VOICE_LSAX;
+    attr.voice = 1 << (voice_slot);
+    attr.addr = g_Spu.m_SoundDefinitions[pSoundId].m_Addr;
+    attr.pitch = g_Spu.m_SoundDefinitions[pSoundId].m_Pitch;
+
+    if (g_Spu.m_SoundDefinitions[pSoundId].m_PitchVariance != 0) {
+      switch (g_Spu.m_SoundDefinitions[pSoundId].m_VarianceType) {
+        case 0:
+          attr.pitch -= g_Spu.m_SoundDefinitions[pSoundId].m_PitchMultiplier *
+                       (g_Spu.m_SoundDefinitions[pSoundId].m_PitchVariance / 2);
+          attr.pitch += (rand() % g_Spu.m_SoundDefinitions[pSoundId].m_PitchVariance) *
+                                  g_Spu.m_SoundDefinitions[pSoundId].m_PitchMultiplier;
+          break;
+        case 1:
+          attr.pitch += (rand() % g_Spu.m_SoundDefinitions[pSoundId].m_PitchVariance) *
+                                  g_Spu.m_SoundDefinitions[pSoundId].m_PitchMultiplier;
+          break;
+        case 2:
+          attr.pitch -= (rand() % g_Spu.m_SoundDefinitions[pSoundId].m_PitchVariance) *
+                                  g_Spu.m_SoundDefinitions[pSoundId].m_PitchMultiplier;
+          break;
+      }
+    }
+
+    attr.loop_addr = g_Spu.m_SoundDefinitions[pSoundId].m_LoopAddr;
+
+    switch (g_Spu.m_ActiveSounds[i].m_Flags & (0x10 | 0x8 | 0x4)) {
+      case 4:
+      case 16:
+        if ((g_Spu.m_NextSoundOverrideFlags & 1) != 0) {
+          g_Spu.m_NextSoundOverrideFlags &= ~1;
+          
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.left = g_Spu.m_VolumeOverride.left;
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.right = g_Spu.m_VolumeOverride.left;
+          
+          attr.volume.left = g_Spu.m_VolumeOverride.left;
+          attr.volume.right = g_Spu.m_VolumeOverride.right;
+          
+          g_Spu.m_ActiveSounds[i].m_StereoVolume.right = g_Spu.m_VolumeOverride.right;
+          g_Spu.m_ActiveSounds[i].m_StereoVolume.left = g_Spu.m_VolumeOverride.left;
+        } else {
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.left = 0x2000;
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.right = 0x2000;
+          attr.volume.right = 0x2000;
+          attr.volume.left = 0x2000;
+          g_Spu.m_ActiveSounds[i].m_StereoVolume.right = 0x2000;
+          g_Spu.m_ActiveSounds[i].m_StereoVolume.left = 0x2000;
+        }
+        break;
+      case 8:
+        if ((g_Spu.m_NextSoundOverrideFlags & 1) != 0) {
+          g_Spu.m_NextSoundOverrideFlags &= ~1;
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.left = g_Spu.m_VolumeOverride.left;
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.right = g_Spu.m_VolumeOverride.right;
+          attr.volume.right = g_Spu.m_VolumeOverride.right;
+          attr.volume.left = g_Spu.m_VolumeOverride.left;
+        } else {
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.left = 0x3CCC;
+          g_Spu.m_ActiveSounds[voice_slot].m_Volume.right = 0x3CCC;
+          attr.volume.right = 0x3CCC;
+          attr.volume.left = 0x3CCC;
+        }
+        func_80056C84(
+          &attr.volume, 
+          length, 
+          func_80017908(
+            g_Camera.m_Rotation.z >> 4,
+            (char)Atan2(
+            g_Camera.m_Position.x - g_Spu.m_ActiveSounds[voice_slot].m_Moby->m_Position.x, 
+            g_Camera.m_Position.y - g_Spu.m_ActiveSounds[voice_slot].m_Moby->m_Position.y, 
+            0)
+          ), 
+          maxDist, 
+          &g_Spu.m_ActiveSounds[voice_slot].m_Volume
+        );
+        break;
+    }
+
+    attr.volume.left = attr.volume.left * g_Spu.m_SoundVolume >> 12;
+    attr.volume.right = attr.volume.right * g_Spu.m_SoundVolume >> 12;
+    
+    SpuSetVoiceAttr(&attr);
+    
+    g_Spu.m_PlayVoice |= 1 << (voice_slot);
+  }
+
+  g_Spu.m_ActiveSounds[voice_slot].m_SoundRefPtr = pSoundRefOut;
+  
+  if (pSoundRefOut != 0) {
+    *pSoundRefOut = voice_slot;
+    if (g_Spu.m_SoundDefinitions[pSoundId].m_LoopAddr != 0)
+      g_Spu.m_ActiveSounds[voice_slot].m_Flags |= 0x100;
+  }
+  
+  return 0;
+}
 
 // Stop sound
 void StopSound(u_int pVoice, u_int pType) {
