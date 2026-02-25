@@ -46,7 +46,7 @@
 - [x] func_8005B6F8
 - [x] func_8005B7D8
 - [x] SpuInitialize
-- [ ] PlaySound
+- [x] PlaySound
 - [x] StopSound
 - [x] func_800562A4
 - [ ] func_8005637C
@@ -136,10 +136,10 @@
 - [x] func_8001277C
 - [x] Initialize
 - [x] SetNewSoundTable
-- [ ] func_80012D58
+- [x] func_80012D58
 - [x] PatchInSpyroAnimations
 - [x] PatchMobyModelPointers
-- [ ] func_8001364C
+- [x] func_8001364C
 - [x] func_800144C8
 - [x] LoadCutscene
 - [x] LoadDragonCutscene
