@@ -806,6 +806,7 @@ void func_800144C8(void) {
 }
 
 /// @brief Load a cutscene (titlescreen, intro, outro)
+#if GAME_VER == VER_NTSC_U
 void LoadCutscene(void) {
   RECT r;
   int i;
@@ -977,6 +978,7 @@ void LoadCutscene(void) {
     g_LoadStage = 10;
   }
 }
+#endif
 
 /// @brief Loads a dragon cutscene
 void LoadDragonCutscene(void) {
@@ -995,6 +997,9 @@ void LoadDragonCutscene(void) {
 
   // Used in stage 3
   int x;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  OffsetLength *dragonEntry;
+#endif
 
   // Wait for the CD subsystem to finish loading
   CDLoadTime();
@@ -1003,6 +1008,9 @@ void LoadDragonCutscene(void) {
       (g_CdMusic.m_Flags & 0x40) == 0)
     return;
 
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  dragonEntry = &g_LevelHeader.m_Dragons[g_DragonCutscene.m_CutsceneIdx];
+#endif
   switch (g_DragonCutscene.m_Stage) {
   case 0: // Prepare to load dragon cutscene data, compute lengths and overflow
 
@@ -1011,10 +1019,18 @@ void LoadDragonCutscene(void) {
     modelSpaceLeft = (int)g_Models[250] - (int)g_Buffers.m_ModelData;
 
     // Full read if it fits
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    if (dragonEntry->m_Length <=
+#else
     if (g_LevelHeader.m_Dragons[g_DragonCutscene.m_CutsceneIdx].m_Length <=
+#endif
         modelSpaceLeft) {
       g_DragonCutscene.m_LoadLength =
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+          dragonEntry->m_Length;
+#else
           g_LevelHeader.m_Dragons[g_DragonCutscene.m_CutsceneIdx].m_Length;
+#endif
       g_DragonCutscene.m_HasOverflow = 0;
     } else {
       // Otherwise read only a multiple of 2048 bytes
@@ -1029,7 +1045,11 @@ void LoadDragonCutscene(void) {
     CDLoadAsync(
         g_CdState.m_WadSector, g_Buffers.m_ModelData,
         g_DragonCutscene.m_LoadLength,
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+        dragonEntry->m_Offset +
+#else
         g_LevelHeader.m_Dragons[g_DragonCutscene.m_CutsceneIdx].m_Offset +
+#endif
             g_WadHeader.m_LevelEntry[g_LevelIndex].m_Data.m_Offset,
         600);
 
@@ -1089,9 +1109,17 @@ void LoadDragonCutscene(void) {
           g_CdState.m_WadSector,
           (char *)g_Buffers.m_ModelData + g_DragonCutscene.m_LoadLength -
               g_DragonCutscene.m_Header.m_DragonModel.m_Offset,
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+          dragonEntry->m_Length -
+#else
           g_LevelHeader.m_Dragons[g_DragonCutscene.m_CutsceneIdx].m_Length -
+#endif
               g_DragonCutscene.m_LoadLength,
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+          dragonEntry->m_Offset +
+#else
           g_LevelHeader.m_Dragons[g_DragonCutscene.m_CutsceneIdx].m_Offset +
+#endif
               g_WadHeader.m_LevelEntry[g_LevelIndex].m_Data.m_Offset +
               g_DragonCutscene.m_LoadLength,
           600);

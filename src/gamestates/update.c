@@ -40,10 +40,14 @@
 #include <rand.h>
 
 extern int _stacksize;
-
 /// @brief Updates level transition gems and text
 void func_8002DA74(void) {
   int i;
+#if GAME_VER == VER_C3_DEMO_NTSC_U
+  const int hud_end_ticks = 384;
+#else
+  const int hud_end_ticks = 416;
+#endif
 
   g_LevelTransGems = (TransGem *)g_SonyImage.unk_0x2800;
   if (g_LevelTransTicks == 0) {
@@ -52,39 +56,50 @@ void func_8002DA74(void) {
       g_LevelTransChestDuration = 192;
     }
     for (i = 0; i < 64; i++) {
-      g_LevelTransGems[i]._08 = 0;
+      g_LevelTransGems[i].active = 0;
     }
   }
 
   g_LevelTransTicks += g_DeltaTime;
 
-  if (g_LevelTransTicks > 416) {
+  if (g_LevelTransTicks > hud_end_ticks) {
     g_LevelTransHudActive = 0;
   } else if (g_LevelTransTicks >= 128) {
     for (i = 0; i < 32; i++) {
 
       if (i < g_NGemsSinceLevelEntry && (i * 2 + 128) <= g_LevelTransTicks) {
         if (g_LevelTransTicks < 256) {
-          if (g_LevelTransGems[i]._08 == 0) {
-            g_LevelTransGems[i]._08 = 1;
+          if (g_LevelTransGems[i].active == 0) {
+            g_LevelTransGems[i].active = 1;
             g_LevelTransGems[i].age =
                 g_LevelTransTicks - 128 - i * 2 - g_DeltaTime;
+#if GAME_VER == VER_C3_DEMO_NTSC_U
+            g_LevelTransGems[i].xOffset = rand() % 320 - 160;
+            g_LevelTransGems[i].yOffset = (rand() & 63) + 96;
+            g_LevelTransGems[i]._04 = (rand() & 2047) - 1024;
+#else
             g_LevelTransGems[i].targetX = (rand() & 255) - 128;
             g_LevelTransGems[i].targetY = (rand() & 63) + 96;
+#endif
             g_LevelTransGems[i].rot.x = (rand() & 63) - 32;
             g_LevelTransGems[i].rot.y = (rand() & 63) - 32;
             g_LevelTransGems[i].rot.z = rand();
+#if GAME_VER == VER_NTSC_U
             g_LevelTransGems[i]._0D = (rand() & 2) - 1;
             g_LevelTransGems[i]._0E = (rand() & 2) - 1;
-            g_LevelTransGems[i]._0F = (rand() & 15) - 8;
+#endif
+            g_LevelTransGems[i].rotationStepZ = (rand() & 15) - 8;
             if ((g_LevelTransTicks & 7) == 0) {
               PlaySound(g_Spu.m_SoundTable->gemPickup, 0, 16, 0);
             }
           }
         }
-        if (g_LevelTransGems[i]._08 != 0) {
+        if (g_LevelTransGems[i].active != 0) {
           g_LevelTransGems[i].age += g_DeltaTime;
-          g_LevelTransGems[i].rot.z += g_LevelTransGems[i]._0F;
+          g_LevelTransGems[i].rot.z += g_LevelTransGems[i].rotationStepZ;
+#if GAME_VER == VER_C3_DEMO_NTSC_U
+          if (g_LevelTransGems[i].age > 128) {
+#else
           if (g_LevelTransGems[i].age < 48) {
             g_LevelTransGems[i].xOffset =
                 FIXED_MUL(g_LevelTransGems[i].targetX,
@@ -114,7 +129,8 @@ void func_8002DA74(void) {
                           COSINE_8((g_LevelTransGems[i].age - 96) * 4 / 3)) >>
                 1;
           } else {
-            g_LevelTransGems[i]._08 = 0;
+#endif
+            g_LevelTransGems[i].active = 0;
             if (i == (i / 3) * 3) {
               PlaySound(g_Spu.m_SoundTable->pickupDing, 0, 16, 0);
             }
@@ -213,6 +229,7 @@ void func_8002E12C(void) {
   }
 
   // Quit Game
+#if GAME_VER == VER_NTSC_U
   if (D_800757C8 == 2) {
     if (g_Pad.m_Down & (PAD_LEFT | PAD_RIGHT)) {
       // Yes or No, toggle between the two options
@@ -263,6 +280,7 @@ void func_8002E12C(void) {
     }
     return;
   }
+#endif
 
   if (D_800757C8 == 1) {
     if (g_Pad.m_Down & PAD_DOWN) {
@@ -314,9 +332,19 @@ void func_8002E12C(void) {
 
     case 1: // Music volume
       if ((g_Pad.m_Down & PAD_LEFT) && D_80075748 > 0) {
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+        g_Spu.m_NextSoundOverrideFlags = 1;
+        g_Spu.m_VolumeOverride.left = g_Spu.m_VolumeOverride.right =
+            (D_80075748 * 0x2000) / 10;
+#endif
         PlaySound(g_Spu.m_SoundTable->menuConfirm, nullptr, 16, nullptr);
         D_80075748--;
       } else if ((g_Pad.m_Down & PAD_RIGHT) && D_80075748 < 10) {
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+        g_Spu.m_NextSoundOverrideFlags = 1;
+        g_Spu.m_VolumeOverride.left = g_Spu.m_VolumeOverride.right =
+            (D_80075748 * 0x2000) / 10;
+#endif
         PlaySound(g_Spu.m_SoundTable->menuConfirm, nullptr, 16, nullptr);
         D_80075748++;
       }
@@ -387,6 +415,11 @@ void func_8002E12C(void) {
   // SKELETON: June leftover, there used to be a check that initialised
   // this to 2 if we're in a homeworld, because quit game didn't exist yet.
   highestOptionIndex = 3;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  if (g_LevelId % 10 == 0) {
+    highestOptionIndex = 2;
+  }
+#endif
 
   // Main pause screen
   if (g_Pad.m_Down & PAD_DOWN) {
@@ -424,12 +457,14 @@ void func_8002E12C(void) {
 
     case 3: // Quit
       PlaySound(g_Spu.m_SoundTable->menuConfirm, nullptr, 16, nullptr);
+#if GAME_VER == VER_NTSC_U
       if (g_LevelId % 10 == 0) {
         // In a homeworld, open quit screen
         D_80075720 = 1;
         D_800757C8 = 2;
         return;
       }
+#endif
 
       // Exit level
       VecNull(&g_Spyro.m_HeadLookTarget);
@@ -443,6 +478,11 @@ void func_8002E12C(void) {
         return;
       }
       func_8002C618();
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+      if (g_LevelGemCount[g_LevelIndex] == g_TargetGemCounts[g_LevelIndex]) {
+        g_LevelVortexExitFlags[g_LevelIndex] = 1;
+      }
+#endif
       return;
     }
   }
@@ -466,6 +506,7 @@ void func_8002EB2C(void) {
     return;
   }
 
+#if GAME_VER == VER_NTSC_U
   // Warp code handling takes priority
   if (g_LevelCheatActive) {
     CheatProcessLevelWarp();
@@ -474,6 +515,7 @@ void func_8002EB2C(void) {
 
   // Process cheats
   CheatsProcess();
+#endif
 
   // If we're not scrolling
   if (D_800757CC == 0) {
@@ -523,7 +565,11 @@ void func_8002EB2C(void) {
 
   // Return to the pause menu when you press start or triangle
   // (Why are we checking g_LevelCheatActive exactly?)
+#if GAME_VER == VER_NTSC_U
   if ((g_Pad.m_Down & (PAD_SELECT | PAD_CROSS)) && !g_LevelCheatActive) {
+#else
+  if (g_Pad.m_Down & (PAD_SELECT | PAD_CROSS)) {
+#endif
     func_8002C7BC();
   }
 }
@@ -1166,6 +1212,9 @@ void func_8002F3E4(void) {
       g_DragonCutscene.m_CutsceneDragon->m_DepthOffset = 5;
       g_DragonCutscene.m_CutsceneDragon->m_ShadowDistance = -1;
       g_DragonCutscene.m_CutsceneDragon->m_Position.z += 1024;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+      g_CollisionPoint.z =
+#endif
       func_8004DF24(&g_DragonCutscene.m_CutsceneDragon->m_Position);
       g_DragonCutscene.m_CutsceneDragon->m_Position.z -= 1024;
       MobyUpdateShadow(g_DragonCutscene.m_CutsceneDragon);
@@ -1222,11 +1271,19 @@ void func_8002F3E4(void) {
     int div;
 
     if (g_DragonCutscene.m_CutsceneTicks < g_DragonCutscene.unk_0x4C * 2) {
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+      int cutsceneTicks =
+          ((RescuedDragonMobyProps *)
+               g_DragonCutscene.m_RescuedDragonMoby->m_Props)->m_CutsceneTicks;
+      if (g_DragonCutscene.unk_0x58 == 0 &&
+          g_DragonCutscene.m_CutsceneTicks >= cutsceneTicks) {
+#else
       if (g_DragonCutscene.unk_0x58 == 0 &&
           g_DragonCutscene.m_CutsceneTicks >=
               ((RescuedDragonMobyProps *)
                    g_DragonCutscene.m_RescuedDragonMoby->m_Props)
                   ->m_CutsceneTicks) {
+#endif
         SoundDefinition sndBak;
 
         Memcpy(&sndBak, g_Spu.m_SoundDefinitions, sizeof(SoundDefinition));
@@ -1304,6 +1361,13 @@ void func_8002F3E4(void) {
         g_DragonCutscene.m_CutsceneDragon->m_AnimationState.m_FrameProgress = 0;
       }
 
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+      if (g_Models[MOBYCLASS_DRAGON_CUTSCENE_SPYRO]
+              ->m_Animations[0]
+              ->m_ProgressPerTick == 0) {
+        div = 256;
+      } else
+#endif
       if (g_Models[MOBYCLASS_DRAGON_CUTSCENE_SPYRO]
               ->m_Animations[0]
               ->m_ProgressPerTick == 16) {
@@ -1538,7 +1602,9 @@ void func_8002F3E4(void) {
 }
 
 // Needs to be a char array to match padding to 20
+#if GAME_VER == VER_NTSC_U
 static const char s_SaveFileName[20] = "BASCUS-94228SPYRO";
+#endif
 
 /// @brief Gamestate 11 (Fairy)
 void func_800314B4(void) {
@@ -1846,6 +1912,7 @@ void func_800314B4(void) {
       }
       break;
 
+#if GAME_VER == VER_NTSC_U
     case 2:
       if (g_FairyCutscene.m_MenuSelectedOption == 0) {
         MemCardStart();
@@ -1970,8 +2037,10 @@ void func_800314B4(void) {
         MemCardStop();
         func_8002D02C();
         PlaySound(g_Spu.m_SoundTable->menuConfirm, nullptr, 16, nullptr);
+
       }
       break;
+#endif
     }
     break;
   }
@@ -2141,6 +2210,7 @@ void func_800324D8(void) {
 
 /// @brief Keep pinging alternating memcards if we're not otherwise using the
 /// memcard subsystem, and update the card states when we get a response
+#if GAME_VER == VER_NTSC_U
 void CheckMemcardsExist(void) {
   // Check if we're currently waiting for an async memcard
   // operation to complete
@@ -2163,10 +2233,12 @@ void CheckMemcardsExist(void) {
 
   MemCardExist(g_TitlescreenState.m_CardIdxChecking << 4);
 }
+#endif
 
 /// @brief If triangle is down, eat current async operation and reset mem card
 /// read sequence
 /// @returns 0 if triangle wasn't pushed or MemCardSync operation completed
+#if GAME_VER == VER_NTSC_U
 int func_80032AB0(void) {
   // TODO: There's UB here, since we don't return anything here
   // And we use the return value of MemCardSync, which would always
@@ -2193,6 +2265,7 @@ int func_80032AB0(void) {
                      (void *)&g_TitlescreenState.m_CardCompletedFunc,
                      (void *)&g_TitlescreenState.m_CardResultData);
 }
+#endif
 
 /**
  * @brief Gamestate 13 - Titlescreen demo mode update
@@ -2216,7 +2289,9 @@ int func_80032AB0(void) {
  */
 void GamestateCutsceneTransition(void) {
   Vector3D tempPos;
+#if GAME_VER == VER_NTSC_U
   RECT rect;
+#endif
   int tick;
   int angle;
   int levelId;
@@ -2225,6 +2300,7 @@ void GamestateCutsceneTransition(void) {
     // Not in demo mode - skip to common exit
   } else if (g_TitlescreenState.m_State == TSS_Setup) {
     // Initial setup - stop audio and prepare loading
+#if GAME_VER == VER_NTSC_U
     KillSoundsAndMusic(0); // Halts CD music and all SPU voices
     SpuUpdate();
     g_TitlescreenState.m_State = TSS_Loading;
@@ -2258,11 +2334,23 @@ void GamestateCutsceneTransition(void) {
 
     // Initialize camera
     g_Camera.m_Rotation.z = 0x400;
+#else
+    levelId = g_LevelId;
+    g_TitlescreenState.m_State = TSS_Loading;
+    g_LoadStage = 1;
+    g_Camera.m_Rotation.z = 0x400;
+    g_IsFlightLevel = 0;
+    g_PortalLevelId = 0;
+    g_HasLevelTransition = 0;
+#endif
     g_Camera.m_Rotation.x = 0;
     g_Camera.m_Rotation.y = 0;
     g_Camera.m_Position.x = 0x2000;
     g_Camera.m_Position.y = 0;
     g_Camera.m_Position.z = 0x2000;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    g_NextLevelId = levelId;
+#endif
 
     // Reset Spyro physics (full reset) and set initial flyby position
     SpyroReset(1); // Clears state machine and velocities
@@ -2278,6 +2366,7 @@ void GamestateCutsceneTransition(void) {
 
   } else if (g_TitlescreenState.m_State == TSS_Loading) {
     // Loading phase
+#if GAME_VER == VER_NTSC_U
     if (g_TitlescreenState.m_DemoType == TSD_Cutscene) {
       // Load cutscene until stage 3
       while (g_LoadStage < 3) {
@@ -2285,12 +2374,15 @@ void GamestateCutsceneTransition(void) {
         CDMusicUpdate();
       }
     } else {
+#endif
       // Load level until stage 6
       while (g_LoadStage < 6) {
         LoadLevel(1);
         CDMusicUpdate();
       }
+#if GAME_VER == VER_NTSC_U
     }
+#endif
 
     g_TitlescreenState.m_State = TSS_Active;
     g_TitlescreenState.m_Tick = 0;
@@ -2306,7 +2398,11 @@ void GamestateCutsceneTransition(void) {
       g_Spyro.m_Position.y =
           (Sin(((-g_TitlescreenState.m_Tick) << 10) / 80) >> 1) + 0xE80;
       g_Spyro.m_Position.z =
+#if GAME_VER == VER_NTSC_U
           (Sin(((-g_TitlescreenState.m_Tick) << 10) / 80) >> 1) + 0x2980;
+#else
+          Sin(((-g_TitlescreenState.m_Tick) << 10) / 80) / 2 + 0x29A0;
+#endif
     } else if (tick < 120) {
       // Fixed position
       g_Spyro.m_Position.x = 0x1400;
@@ -2328,8 +2424,13 @@ void GamestateCutsceneTransition(void) {
           (Sin(0xC00 - ((g_TitlescreenState.m_Tick - 240) << 10) / 80) >> 1) +
           0xE80;
       g_Spyro.m_Position.z =
+#if GAME_VER == VER_NTSC_U
           (Sin(((g_TitlescreenState.m_Tick - 240) << 10) / 80 + 0xC00) >> 1) +
           0x2980;
+#else
+          Sin(((g_TitlescreenState.m_Tick - 240) << 10) / 80 + 0xC00) / 2 +
+          0x29A0;
+#endif
     } else {
       // Final position
       g_Spyro.m_Position.x = 0x2000;
@@ -2347,6 +2448,7 @@ void GamestateCutsceneTransition(void) {
     SpyroUpdateHeadAnimation();   // Head animation state machine
     SpyroUpdateTailAnimation();   // Tail follows body animation
 
+#if GAME_VER == VER_NTSC_U
     if (g_TitlescreenState.m_DemoType == TSD_Cutscene) {
       // Cutscene path
       if (g_LoadStage < 7) {
@@ -2371,6 +2473,7 @@ void GamestateCutsceneTransition(void) {
         return;
       }
     } else {
+#endif
       // Level path
       if (g_LoadStage < 13) {
         LoadLevel(1);
@@ -2385,7 +2488,9 @@ void GamestateCutsceneTransition(void) {
         LoadLevel(1);
         return;
       }
+#if GAME_VER == VER_NTSC_U
     }
+#endif
   }
 
   SpecularUpdate(3);
@@ -2393,6 +2498,7 @@ void GamestateCutsceneTransition(void) {
 }
 
 /// @brief Gamestate 14 - Cutscene update
+#if GAME_VER == VER_NTSC_U
 void GamestateCutsceneUpdate(void) {
   RECT rc;
   int duration;
@@ -2473,7 +2579,6 @@ void GamestateCutsceneUpdate(void) {
     EndCutscenePlayback();
   }
 }
-
 /// @brief Gamestate 15
 void func_800333DC(void) {
   SpecularUpdate(3);
@@ -2509,11 +2614,12 @@ void func_800333DC(void) {
     return;
   }
 }
-
+#endif
 // Titlescreen terminator
 extern void Terminator_titlescreen_code(void);
 
 /// @brief Update demo mode
+#if GAME_VER == VER_NTSC_U
 int func_800334D4(void) {
   RECT r;
   char _pad[8]; // Hmmmm..?
@@ -2626,6 +2732,7 @@ int func_800334D4(void) {
 
   return 0;
 }
+#endif
 
 // Credits update (overlay)
 void func_credits_8007AA50();
@@ -2670,7 +2777,9 @@ void GamestateUpdate(void) {
       func_800314B4(); // Fairy save system update
     } else if (g_Gamestate == GS_Balloonist) {
       func_800324D8(); // Balloonist ride update
-    } else if (g_Gamestate == GS_TitleScreen) {
+    }
+#if GAME_VER == VER_NTSC_U
+    else if (g_Gamestate == GS_TitleScreen) {
       if (g_TitlescreenState.m_Mode != TSM_Demo) {
         TitlescreenUpdate(); // Titlescreen menu (overlay)
       } else {
@@ -2685,6 +2794,12 @@ void GamestateUpdate(void) {
         func_credits_8007AA50(); // Credits update (overlay)
       }
     }
+#else
+    else if (g_Gamestate == GS_TitleScreen) {
+      GamestateCutsceneTransition();
+    }
+#endif
+
 
     SpuUpdate();
 
@@ -2694,12 +2809,14 @@ void GamestateUpdate(void) {
   // GS_Playing: Normal gameplay update
   g_GameTick++;
 
+#if GAME_VER == VER_NTSC_U
   // Handle demo mode input playback; exit early if demo ends
   if (g_DemoMode) {
     if (func_800334D4()) {
       return;
     }
   }
+#endif
 
   // Update environment animations
   func_8002A6FC(g_DeltaTime);

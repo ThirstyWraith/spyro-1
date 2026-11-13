@@ -5,6 +5,8 @@
 
 #include <libcd.h>
 
+#include "versions.h"
+
 /// @brief Maximum read time for the current disc read
 extern int g_CDMaxReadTime;
 
@@ -29,6 +31,10 @@ extern CdState g_CdState;
 
 // Function that checks if the read time is not exceeded, reinitiates if it is
 void CDLoadTime(void);
+
+#if GAME_VER == VER_C3_DEMO_NTSC_U
+int CDGetFileSector(char *pFileName);
+#endif
 
 // (Official name, from S3 printf)
 // CD Read callback, used for unsetting the reading state and retrying on error

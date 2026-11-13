@@ -70,6 +70,7 @@ dlabel D_80075AEC
 dlabel D_80075AF0
 /* 65FB8 80075AF0 */ .space 0x08
 
+.if GAME_VER == VER_NTSC_U
 dlabel D_80075AF8
 /* 65FC0 80075AF8 */ .space 0x04
 
@@ -207,6 +208,18 @@ dlabel D_80075C14
 
 dlabel D_80075C48
 /* 66110 80075C48 */ .space 0x10
+
+.endif
+
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+.align 2
+dlabel file
+.space 64 * 24
+dlabel dire
+.space 128 * 44
+dlabel load_buf
+.space 2048
+.endif
 
 dlabel D_80075C58
 /* 66120 80075C58 */ .space 0x04

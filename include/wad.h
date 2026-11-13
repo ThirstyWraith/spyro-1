@@ -20,7 +20,11 @@ extern struct {
 
   OffsetLength m_TitleScreenOverlay;
 
+#if GAME_VER == VER_C3_DEMO_NTSC_U
+  OffsetLength m_CutsceneData[1];
+#else
   OffsetLength m_CutsceneData[4]; // CutsceneType
+#endif
 
   OffsetLength m_GameOverSkybox; // Skybox used on the game over screen
   OffsetLength m_PETE;           // PETE.WAD in prototypes
@@ -30,10 +34,12 @@ extern struct {
     OffsetLength m_Data;
   } m_LevelEntry[36]; // Last entry is empty
 
+#if GAME_VER == VER_NTSC_U
   OffsetLength m_CreditsOverlay;
 
   OffsetLength m_Credits1Data[10];
   OffsetLength m_Credits2Data[10];
+#endif
 
 } g_WadHeader;
 

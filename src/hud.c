@@ -156,7 +156,15 @@ void HudTick(void) {
   int i;
   int j;
   Vector3D vec;
-
+#if GAME_VER == VER_NTSC_U
+  const int gem_fast_count_threshold = 200;
+  const int gem_slow_count_threshold = 20;
+  const int gem_fast_rotation_threshold = 3;
+#else
+  const int gem_fast_count_threshold = 160;
+  const int gem_slow_count_threshold = 16;
+  const int gem_fast_rotation_threshold = 2;
+#endif
   g_Hud.unk_0x3c = (g_Hud.unk_0x3c - g_DeltaTime) & 0xFF;
   g_Hud.unk_0x40 = (g_Hud.unk_0x40 + 1) % 9;
   g_Hud.m_Mobys[4].m_Rotation.y = COSINE_8(g_Hud.unk_0x3c) >> 9;
@@ -188,7 +196,7 @@ void HudTick(void) {
       }
     } else {
       g_Hud.m_GemSteadyTicks = 0;
-      if (g_LevelGemCount[g_LevelIndex] - g_Hud.m_GemCount >= 3 &&
+      if (g_LevelGemCount[g_LevelIndex] - g_Hud.m_GemCount >= gem_fast_rotation_threshold &&
           (g_Hud.m_GemProgress & 0x1F) == 0) {
         g_Hud.m_GemProgress -= 0x20;
       } else {
@@ -196,9 +204,9 @@ void HudTick(void) {
       }
       HudPrint(0, 4, g_Hud.m_GemCount + 1, 0);
       HudMobyRotate(0, 4, g_Hud.m_GemProgress);
-      if (g_LevelGemCount[g_LevelIndex] - g_Hud.m_GemCount > 200) {
+      if (g_LevelGemCount[g_LevelIndex] - g_Hud.m_GemCount > gem_fast_count_threshold) {
         g_Hud.m_GemCount += 8;
-      } else if (g_LevelGemCount[g_LevelIndex] - g_Hud.m_GemCount > 20 ||
+      } else if (g_LevelGemCount[g_LevelIndex] - g_Hud.m_GemCount > gem_slow_count_threshold ||
                  g_Hud.m_GemProgress == 0xC0) {
         g_Hud.m_GemCount += 1;
       }

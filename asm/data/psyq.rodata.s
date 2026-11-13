@@ -822,6 +822,67 @@ dlabel D_80011F04
 .align 2
 .size D_80011F04, . - D_80011F04
 
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+.align 2
+dlabel ISO9660_rodata_0
+.asciz "%s: path level (%d) error\n"
+.align 2
+dlabel ISO9660_rodata_1C
+.asciz "%s: dir was not found\n"
+.align 2
+dlabel ISO9660_rodata_34
+.asciz "CdSearchFile: disc error\n"
+.align 2
+dlabel ISO9660_rodata_50
+.asciz "CdSearchFile: searching %s...\n"
+.align 2
+dlabel ISO9660_rodata_70
+.asciz "%s:  found\n"
+.align 2
+dlabel ISO9660_rodata_7C
+.asciz "%s: not found\n"
+.align 2
+dlabel ISO9660_rodata_8C
+.asciz "CD_newmedia: Read error in cd_read(PVD)\n"
+.align 2
+dlabel ISO9660_rodata_B8
+.asciz "CD001"
+.align 2
+dlabel ISO9660_rodata_C0
+.asciz "CD_newmedia: Disc format error in cd_read(PVD)\n"
+.align 2
+dlabel ISO9660_rodata_F0
+.asciz "CD_newmedia: Read error (PT:%08x)\n"
+.align 2
+dlabel ISO9660_rodata_114
+.asciz "CD_newmedia: sarching dir..\n"
+.align 2
+dlabel ISO9660_rodata_134
+.asciz "\t%08x,%04x,%04x,%s\n"
+.align 2
+dlabel ISO9660_rodata_148
+.asciz "CD_newmedia: %d dir entries found\n"
+.align 2
+dlabel ISO9660_rodata_16C
+.asciz "CD_cachefile: dir not found\n"
+.align 2
+dlabel ISO9660_rodata_18C
+.asciz "CD_cachefile: searching...\n"
+.align 2
+dlabel ISO9660_rodata_1A8
+.asciz "."
+.align 2
+dlabel ISO9660_rodata_1AC
+.asciz ".."
+.align 2
+dlabel ISO9660_rodata_1B0
+.asciz "\t(%02x:%02x:%02x) %8d %s\n"
+.align 2
+dlabel ISO9660_rodata_1CC
+.asciz "CD_cachefile: %d files found\n"
+.align 2
+.endif
+
 .align 2
 dlabel D_80011F10
 /* 2710 80011F10 */ .asciz "CdRead: sector error\n"
@@ -840,6 +901,7 @@ dlabel D_80011F40
 .align 2
 .size D_80011F40, . - D_80011F40
 
+.if GAME_VER == VER_NTSC_U
 .align 2
 dlabel D_80011F54
 /* 2754 80011F54 */ .asciz "Access Denied. : event multipul open\n"
@@ -999,8 +1061,9 @@ dlabel D_800121C8
 /* 29C8 800121C8 */ .asciz "libmcrd: event overflow\n"
 .align 2
 .size D_800121C8, . - D_800121C8
+.endif
 .section .rodata.jtbl
-.align 3
+.align 2
 dlabel jtbl_800121E4
 /* 29E4 800121E4 24930680 */ .word .L80069324
 /* 29E8 800121E8 30930680 */ .word .L80069330

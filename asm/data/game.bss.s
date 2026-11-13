@@ -28,8 +28,10 @@ dlabel g_CollisionPoint
 dlabel g_CdState
 /* Total size from 80076B90 to 80076BC0 */ .space 0x30
 
+.if GAME_VER == VER_NTSC_U
 dlabel cheat_InputBuffer
 /* 66B08 80076BC0 */ .space 0x40
+.endif
 
 dlabel g_LevelHeader
 /* Total size from 80076C00 to 80076DD0 */ .space 0x1D0
@@ -220,7 +222,11 @@ dlabel g_LevelVortexExitFlags
 /* Total size from 8007A6A8 to 8007A6D0 */ .space 0x28
 
 dlabel g_WadHeader
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+.space 0x270
+.else
 /* Total size from 8007A6D0 to 8007AA00 */ .space 0x330
+.endif
 
 /* Used for something Portal filling related */
 dlabel g_PortalScreenRect

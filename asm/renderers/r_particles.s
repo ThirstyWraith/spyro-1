@@ -1,3 +1,4 @@
+.include "render_constants.inc"
 .include "macro.inc"
 .include "c2regs.inc"
 
@@ -69,8 +70,8 @@ glabel func_800573C8
 /* 47CA8 800574A8 78623126 */  addiu      $s1, $s1, %lo(g_ParticleTextures)
 /* 47CAC 800574AC 01001220 */  addi       $s2, $zero, 0x1 /* handwritten instruction */
 /* 47CB0 800574B0 02001320 */  addi       $s3, $zero, 0x2 /* handwritten instruction */
-/* 47CB4 800574B4 0100143C */  lui        $s4, (0x10000 >> 16)
-/* 47CB8 800574B8 0001153C */  lui        $s5, (0x1000000 >> 16)
+/* 47CB4 800574B4 0100143C */  lui        $s4, CLIP_Y_MIN
+/* 47CB8 800574B8 0001153C */  lui        $s5, CLIP_Y_MAX
 /* 47CBC 800574BC 0002163C */  lui        $s6, (0x2000000 >> 16)
 .L800574C0:
 /* 47CC0 800574C0 EF028007 */  bltz       $gp, .L80058080
@@ -1001,12 +1002,12 @@ glabel func_800580F4
 .L800582B4:
 /* 48AB4 800582B4 C0380700 */  sll        $a3, $a3, 3
 /* 48AB8 800582B8 2038F000 */  add        $a3, $a3, $s0 /* handwritten instruction */
-/* 48ABC 800582BC FFFFC920 */  addi       $t1, $a2, -0x1 /* handwritten instruction */
+/* 48ABC 800582BC FFFFC920 */  addi       $t1, $a2, -CLIP_Y_MIN /* handwritten instruction */
 /* 48AC0 800582C0 0200201D */  bgtz       $t1, .L800582CC
 /* 48AC4 800582C4 21780000 */   addu      $t7, $zero, $zero
 /* 48AC8 800582C8 0100EF35 */  ori        $t7, $t7, 0x1
 .L800582CC:
-/* 48ACC 800582CC 00FFC920 */  addi       $t1, $a2, -0x100 /* handwritten instruction */
+/* 48ACC 800582CC 00FFC920 */  addi       $t1, $a2, -CLIP_Y_MAX /* handwritten instruction */
 /* 48AD0 800582D0 02002005 */  bltz       $t1, .L800582DC
 /* 48AD4 800582D4 00000000 */   nop
 /* 48AD8 800582D8 0200EF35 */  ori        $t7, $t7, 0x2
@@ -1053,12 +1054,12 @@ glabel func_800580F4
 /* 48B68 80058368 00D00C48 */  mfc2       $t4, C2_MAC2 /* handwritten instruction */
 /* 48B6C 8005836C 20504501 */  add        $t2, $t2, $a1 /* handwritten instruction */
 /* 48B70 80058370 20608601 */  add        $t4, $t4, $a2 /* handwritten instruction */
-/* 48B74 80058374 FFFF8D21 */  addi       $t5, $t4, -0x1 /* handwritten instruction */
+/* 48B74 80058374 FFFF8D21 */  addi       $t5, $t4, -CLIP_Y_MIN /* handwritten instruction */
 /* 48B78 80058378 0200A01D */  bgtz       $t5, .L80058384
 /* 48B7C 8005837C 21900000 */   addu      $s2, $zero, $zero
 /* 48B80 80058380 01005236 */  ori        $s2, $s2, 0x1
 .L80058384:
-/* 48B84 80058384 00FF8D21 */  addi       $t5, $t4, -0x100 /* handwritten instruction */
+/* 48B84 80058384 00FF8D21 */  addi       $t5, $t4, -CLIP_Y_MAX /* handwritten instruction */
 /* 48B88 80058388 0200A005 */  bltz       $t5, .L80058394
 /* 48B8C 8005838C 00640C00 */   sll       $t4, $t4, 16
 /* 48B90 80058390 02005236 */  ori        $s2, $s2, 0x2
@@ -1089,12 +1090,12 @@ glabel func_800580F4
 /* 48BE8 800583E8 00D00C48 */  mfc2       $t4, C2_MAC2 /* handwritten instruction */
 /* 48BEC 800583EC 20504501 */  add        $t2, $t2, $a1 /* handwritten instruction */
 /* 48BF0 800583F0 20608601 */  add        $t4, $t4, $a2 /* handwritten instruction */
-/* 48BF4 800583F4 FFFF8D21 */  addi       $t5, $t4, -0x1 /* handwritten instruction */
+/* 48BF4 800583F4 FFFF8D21 */  addi       $t5, $t4, -CLIP_Y_MIN /* handwritten instruction */
 /* 48BF8 800583F8 0200A01D */  bgtz       $t5, .L80058404
 /* 48BFC 800583FC 21A80000 */   addu      $s5, $zero, $zero
 /* 48C00 80058400 0100B536 */  ori        $s5, $s5, 0x1
 .L80058404:
-/* 48C04 80058404 00FF8D21 */  addi       $t5, $t4, -0x100 /* handwritten instruction */
+/* 48C04 80058404 00FF8D21 */  addi       $t5, $t4, -CLIP_Y_MAX /* handwritten instruction */
 /* 48C08 80058408 0200A005 */  bltz       $t5, .L80058414
 /* 48C0C 8005840C 00640C00 */   sll       $t4, $t4, 16
 /* 48C10 80058410 0200B536 */  ori        $s5, $s5, 0x2
@@ -1245,10 +1246,10 @@ glabel func_800584C4
 /* 48E24 80058624 7B00A018 */  blez       $a1, .L80058814
 /* 48E28 80058628 80FFC520 */   addi      $a1, $a2, -0x80 /* handwritten instruction */
 /* 48E2C 8005862C 7900A018 */  blez       $a1, .L80058814
-/* 48E30 80058630 0100083C */   lui       $t0, (0x10000 >> 16)
+/* 48E30 80058630 0100083C */   lui       $t0, CLIP_Y_MIN
 /* 48E34 80058634 2228E800 */  sub        $a1, $a3, $t0 /* handwritten instruction */
 /* 48E38 80058638 7600A018 */  blez       $a1, .L80058814
-/* 48E3C 8005863C 0001083C */   lui       $t0, (0x1000000 >> 16)
+/* 48E3C 8005863C 0001083C */   lui       $t0, CLIP_Y_MAX
 /* 48E40 80058640 2228E800 */  sub        $a1, $a3, $t0 /* handwritten instruction */
 /* 48E44 80058644 7300A104 */  bgez       $a1, .L80058814
 /* 48E48 80058648 002C0700 */   sll       $a1, $a3, 16

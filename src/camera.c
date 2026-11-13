@@ -572,6 +572,11 @@ void func_80034CE8(int smoothingPreset) {
   int springCoefficient;
   int deadbandThreshold;
   int filterResult;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  const int springCoefficientMin = 0x5C3;
+#else
+  const int springCoefficientMin = 0x400;
+#endif
 
   // Six Camera Channels
   // Channel One: coordinate azimuth.
@@ -579,8 +584,8 @@ void func_80034CE8(int smoothingPreset) {
   springCoefficient = D_8006C754[smoothingPreset];
 
   // Enforce a minimum spring coefficient in camera state 3.
-  if (g_Camera.m_State == 3 && springCoefficient < 0x400) {
-    springCoefficient = 0x400;
+  if (g_Camera.m_State == 3 && springCoefficient < springCoefficientMin) {
+    springCoefficient = springCoefficientMin;
   }
 
   // Select the azimuth input delta, accounting for special camera states.

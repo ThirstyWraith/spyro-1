@@ -1855,7 +1855,14 @@ typedef struct {
   int m_IsUnskipable;       // Whether the cutscene can't be skipped
   int m_NameIndex;          // The index of the name in the dragon name table
   int m_CutsceneAudioPitch; // The pitch of the cutscene audio (for sample rate)
-  int m_CutsceneTicks;      // The number of ticks the cutscene lasts
+  int m_CutsceneTicks;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  // This will probably have to be turned into an array in PAL
+  int m_CutsceneTicksFrench;
+  int m_CutsceneTicksGerman;
+  int m_CutsceneTicksSpanish;
+  int m_CutsceneTicksItalian;
+#endif
   int m_ShakeTimer;
   Vector3D m_AngleStorage; // Used in moby code
 } RescuedDragonMobyProps;

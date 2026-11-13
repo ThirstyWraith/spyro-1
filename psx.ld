@@ -174,7 +174,7 @@ SECTIONS
         _gp = .;
 
         DEFINE_SECTIONS(.sdata)
-        . = ALIGN(., 4);
+        . = ALIGN(., 8);
         main_SDATA_END = .;
         main_SDATA_SIZE = ABSOLUTE(main_SDATA_END - main_SDATA_START);
 

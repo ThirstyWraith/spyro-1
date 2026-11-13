@@ -1,3 +1,4 @@
+.include "render_constants.inc"
 .include "macro.inc"
 .include "c2regs.inc"
 
@@ -587,8 +588,8 @@ glabel func_8001F798
 /* 101E0 8001F9E0 20F8FE03 */  add        $ra, $ra, $fp /* handwritten instruction */
 /* 101E4 8001F9E4 0800FF93 */  lbu        $ra, 0x8($ra)
 /* 101E8 8001F9E8 FFFF1620 */  addi       $s6, $zero, -0x1 /* handwritten instruction */
-/* 101EC 8001F9EC 0100173C */  lui        $s7, (0x10000 >> 16)
-/* 101F0 8001F9F0 0001183C */  lui        $t8, (0x1000000 >> 16)
+/* 101EC 8001F9EC 0100173C */  lui        $s7, CLIP_Y_MIN
+/* 101F0 8001F9F0 0001183C */  lui        $t8, CLIP_Y_MAX
 /* 101F4 8001F9F4 0002193C */  lui        $t9, (0x2000000 >> 16)
 /* 101F8 8001F9F8 801F1E3C */  lui        $fp, (0x1F800004 >> 16)
 /* 101FC 8001F9FC 0000468C */  lw         $a2, 0x0($v0)
@@ -2225,8 +2226,8 @@ glabel func_80020F34
 /* 1197C 8002117C 20F8FE03 */  add        $ra, $ra, $fp /* handwritten instruction */
 /* 11980 80021180 0800FF93 */  lbu        $ra, 0x8($ra)
 /* 11984 80021184 FFFF1620 */  addi       $s6, $zero, -0x1 /* handwritten instruction */
-/* 11988 80021188 0100173C */  lui        $s7, (0x10000 >> 16)
-/* 1198C 8002118C 0001183C */  lui        $t8, (0x1000000 >> 16)
+/* 11988 80021188 0100173C */  lui        $s7, CLIP_Y_MIN
+/* 1198C 8002118C 0001183C */  lui        $t8, CLIP_Y_MAX
 /* 11990 80021190 0002193C */  lui        $t9, (0x2000000 >> 16)
 /* 11994 80021194 801F1E3C */  lui        $fp, (0x1F800004 >> 16)
 /* 11998 80021198 FD05E013 */  beqz       $ra, .L80022990
@@ -4340,8 +4341,8 @@ glabel func_80022A2C
 /* 137E8 80022FE8 0020CB48 */  ctc2       $t3, C2_R33 /* handwritten instruction */
 .L80022FEC:
 /* 137EC 80022FEC 0400D58E */  lw         $s5, 0x4($s6)
-/* 137F0 80022FF0 01000E3C */  lui        $t6, (0x10000 >> 16)
-/* 137F4 80022FF4 00010F3C */  lui        $t7, (0x1000000 >> 16)
+/* 137F0 80022FF0 01000E3C */  lui        $t6, CLIP_Y_MIN
+/* 137F4 80022FF4 00010F3C */  lui        $t7, CLIP_Y_MAX
 /* 137F8 80022FF8 0002103C */  lui        $s0, (0x2000000 >> 16)
 /* 137FC 80022FFC FFFF1120 */  addi       $s1, $zero, -0x1 /* handwritten instruction */
 /* 13800 80023000 801F133C */  lui        $s3, (0x1F800004 >> 16)

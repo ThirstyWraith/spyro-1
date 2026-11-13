@@ -2561,6 +2561,7 @@ glabel InitHeap
 /* 4E320 8005DB20 00000000 */  nop
 .size InitHeap, . - InitHeap
 
+.if GAME_VER == VER_NTSC_U
 glabel LoadExec
 /* 4E324 8005DB24 A0000A24 */  addiu      $t2, $zero, 0xA0
 /* 4E328 8005DB28 08004001 */  jr         $t2
@@ -2569,13 +2570,15 @@ glabel LoadExec
 .size LoadExec, . - LoadExec
 
 glabel _96_init
-/* 4E334 8005DB34 A0000A24 */ .word 0x240A00A0
-/* 4E338 8005DB38 08004001 */ .word 0x01400008
-/* 4E33C 8005DB3C 71000924 */ .word 0x24090071
-/* 4E340 8005DB40 00000000 */ .word 0x00000000
-/* 4E344 8005DB44 50730021 */ .word 0x21007350
-/* 4E348 8005DB48 AD364200 */ .word 0x004236AD /* invalid instruction */
+/* 4E334 8005DB34 A0000A24 */  addiu      $t2, $zero, 0xA0
+/* 4E338 8005DB38 08004001 */  jr         $t2
+/* 4E33C 8005DB3C 71000924 */   addiu     $t1, $zero, 0x71
+/* 4E340 8005DB40 00000000 */  nop
 .size _96_init, . - _96_init
+
+# PsyQ Identifier
+/* 4E344 8005DB44 50730021 */ .word 0x21007350
+/* 4E348 8005DB48 AD364200 */ .word 0x004236AD
 
 /* Handwritten function */
 glabel _96_remove
@@ -2585,32 +2588,43 @@ glabel _96_remove
 /* 4E358 8005DB58 00000000 */  nop
 /* 4E35C 8005DB5C 00000000 */  nop
 /* 4E360 8005DB60 00000000 */  nop
+.size _96_remove, . - _96_remove
+.endif
+
 glabel func_8005DB64
 /* 4E364 8005DB64 B0000A24 */  addiu      $t2, $zero, 0xB0
 /* 4E368 8005DB68 08004001 */  jr         $t2
 /* 4E36C 8005DB6C 07000924 */   addiu     $t1, $zero, 0x7
 /* 4E370 8005DB70 00000000 */  nop
+.size func_8005DB64, . - func_8005DB64
+
 glabel func_8005DB74
 /* 4E374 8005DB74 B0000A24 */  addiu      $t2, $zero, 0xB0
 /* 4E378 8005DB78 08004001 */  jr         $t2
 /* 4E37C 8005DB7C 08000924 */   addiu     $t1, $zero, 0x8
 /* 4E380 8005DB80 00000000 */  nop
+.size func_8005DB74, . - func_8005DB74
+
 glabel func_8005DB84
 /* 4E384 8005DB84 B0000A24 */  addiu      $t2, $zero, 0xB0
 /* 4E388 8005DB88 08004001 */  jr         $t2
 /* 4E38C 8005DB8C 0B000924 */   addiu     $t1, $zero, 0xB
 /* 4E390 8005DB90 00000000 */  nop
+.size func_8005DB84, . - func_8005DB84
+
 glabel func_8005DB94
 /* 4E394 8005DB94 B0000A24 */  addiu      $t2, $zero, 0xB0
 /* 4E398 8005DB98 08004001 */  jr         $t2
 /* 4E39C 8005DB9C 0C000924 */   addiu     $t1, $zero, 0xC
 /* 4E3A0 8005DBA0 00000000 */  nop
+.size func_8005DB94, . - func_8005DB94
+
 glabel func_8005DBA4
 /* 4E3A4 8005DBA4 01000424 */  addiu      $a0, $zero, 0x1
 /* 4E3A8 8005DBA8 0C000000 */  syscall    0 /* handwritten instruction */
 /* 4E3AC 8005DBAC 0800E003 */  jr         $ra
 /* 4E3B0 8005DBB0 00000000 */   nop
-.size _96_remove, . - _96_remove
+.size func_8005DBA4, . - func_8005DBA4
 
 /* Handwritten function */
 glabel func_8005DBB4
@@ -3288,6 +3302,20 @@ glabel func_8005E4AC
 /* 4ECD0 8005E4D0 0800E003 */  jr         $ra
 /* 4ECD4 8005E4D4 00000000 */   nop
 .size func_8005E4AC, . - func_8005E4AC
+
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+# PsyQ Identifier
+.word 0x21007350
+.word 0x004236AD
+glabel _96_remove
+                               addiu      $t2, $zero, 0xA0
+                               jr         $t2
+                                addiu      $t1, $zero, 0x72
+                               nop
+                               nop
+                               nop
+.size _96_remove, . - _96_remove
+.endif
 
 glabel func_8005E4D8
 /* 4ECD8 8005E4D8 B0000A24 */  addiu      $t2, $zero, 0xB0
@@ -8152,6 +8180,31 @@ glabel srand
 /* 52F68 80062768 00000000 */   nop
 .size srand, . - srand
 
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+glabel strcpy
+                               beqz       $a0, .Lstrcpy_3C
+                                addu      $v0, $zero, $zero
+                               beqz       $a1, .Lstrcpy_3C
+                                addu      $v1, $a0, $zero
+                               lbu        $v0, 0($a1)
+                               addiu      $a1, $a1, 1
+                               addiu      $a0, $v1, 1
+                               beqz       $v0, .Lstrcpy_38
+                                sb        $v0, 0($v1)
+.Lstrcpy_24:
+                               lbu        $v0, 0($a1)
+                               addiu      $a1, $a1, 1
+                               sb         $v0, 0($a0)
+                               bnez       $v0, .Lstrcpy_24
+                                addiu     $a0, $a0, 1
+.Lstrcpy_38:
+                               addu       $v0, $v1, $zero
+.Lstrcpy_3C:
+                               jr         $ra
+                                nop
+.size strcpy, . - strcpy
+.endif
+
 glabel strlen
 /* 52F6C 8006276C 04008014 */  bnez       $a0, .L80062780
 /* 52F70 80062770 21180000 */   addu      $v1, $zero, $zero
@@ -9390,6 +9443,8 @@ jlabel .L8006372C
 /* 54024 80063824 4802BD27 */  addiu      $sp, $sp, 0x248
 /* 54028 80063828 0800E003 */  jr         $ra
 /* 5402C 8006382C 00000000 */   nop
+.size sprintf, . - sprintf
+
 glabel func_80063830
 /* 54030 80063830 2B108500 */  sltu       $v0, $a0, $a1
 /* 54034 80063834 0E004014 */  bnez       $v0, .L80063870
@@ -9478,12 +9533,14 @@ glabel func_800638EC
 /* 54160 80063960 00000000 */   nop
 /* 54164 80063964 00000000 */  nop
 /* 54168 80063968 00000000 */  nop
+
+.if GAME_VER == VER_NTSC_U
 glabel exit
 /* 5416C 8006396C B0000A24 */  addiu      $t2, $zero, 0xB0
 /* 54170 80063970 08004001 */  jr         $t2
 /* 54174 80063974 38000924 */   addiu     $t1, $zero, 0x38
 /* 54178 80063978 00000000 */  nop
-.size sprintf, . - sprintf
+.endif
 
 glabel CdInit
 /* 5417C 8006397C E8FFBD27 */  addiu      $sp, $sp, -0x18
@@ -11752,6 +11809,759 @@ glabel D_8006590C
 /* 561E4 800659E4 2800BD27 */  addiu      $sp, $sp, 0x28
 /* 561E8 800659E8 0800E003 */  jr         $ra
 /* 561EC 800659EC 00000000 */   nop
+.size D_8006590C, . - D_8006590C
+
+.if GAME_VER >= VER_C3_DEMO_NTSC_U
+glabel CdSearchFile
+/* 523C4 80061BC4 0780033C */  lui        $v1, %hi(ISO9660_data_4)
+/* 523C8 80061BC8 74EF638C */  lw         $v1, %lo(ISO9660_data_4)($v1)
+/* 523CC 80061BCC 0780023C */  lui        $v0, %hi(D_80074E4C)
+/* 523D0 80061BD0 78EC428C */  lw         $v0, %lo(D_80074E4C)($v0)
+/* 523D4 80061BD4 B8FFBD27 */  addiu      $sp, $sp, -0x48
+/* 523D8 80061BD8 4000B4AF */  sw         $s4, 0x40($sp)
+/* 523DC 80061BDC 21A08000 */  addu       $s4, $a0, $zero
+/* 523E0 80061BE0 3C00B3AF */  sw         $s3, 0x3C($sp)
+/* 523E4 80061BE4 2198A000 */  addu       $s3, $a1, $zero
+/* 523E8 80061BE8 4400BFAF */  sw         $ra, 0x44($sp)
+/* 523EC 80061BEC 3800B2AF */  sw         $s2, 0x38($sp)
+/* 523F0 80061BF0 3400B1AF */  sw         $s1, 0x34($sp)
+/* 523F4 80061BF4 09006210 */  beq        $v1, $v0, .LCdSearchFile_58
+/* 523F8 80061BF8 3000B0AF */   sw        $s0, 0x30($sp)
+/* 523FC 80061BFC AC87010C */  jal        CD_newmedia
+/* 52400 80061C00 00000000 */   nop
+/* 52404 80061C04 99004010 */  beqz       $v0, .LCdSearchFile_2A8
+/* 52408 80061C08 21100000 */   addu      $v0, $zero, $zero
+/* 5240C 80061C0C 0780023C */  lui        $v0, %hi(D_80074E4C)
+/* 52410 80061C10 78EC428C */  lw         $v0, %lo(D_80074E4C)($v0)
+/* 52414 80061C14 0780013C */  lui        $at, %hi(ISO9660_data_4)
+/* 52418 80061C18 74EF22AC */  sw         $v0, %lo(ISO9660_data_4)($at)
+.LCdSearchFile_58:
+/* 5241C 80061C1C 00006392 */  lbu        $v1, 0x0($s3)
+/* 52420 80061C20 5C000224 */  addiu      $v0, $zero, 0x5C
+/* 52424 80061C24 05006210 */  beq        $v1, $v0, .LCdSearchFile_78
+/* 52428 80061C28 01000424 */   addiu     $a0, $zero, 0x1
+/* 5242C 80061C2C 9B870108 */  j          .LCdSearchFile_2A8
+/* 52430 80061C30 21100000 */   addu      $v0, $zero, $zero
+.LCdSearchFile_70:
+/* 52434 80061C34 2F870108 */  j          .LCdSearchFile_F8
+/* 52438 80061C38 1000A0A3 */   sb        $zero, 0x10($sp)
+.LCdSearchFile_78:
+/* 5243C 80061C3C 1000A0A3 */  sb         $zero, 0x10($sp)
+/* 52440 80061C40 21806002 */  addu       $s0, $s3, $zero
+/* 52444 80061C44 21900000 */  addu       $s2, $zero, $zero
+.LCdSearchFile_84:
+/* 52448 80061C48 00000592 */  lbu        $a1, 0x0($s0)
+/* 5244C 80061C4C 5C000224 */  addiu      $v0, $zero, 0x5C
+/* 52450 80061C50 FF00A330 */  andi       $v1, $a1, 0xFF
+/* 52454 80061C54 09006210 */  beq        $v1, $v0, .LCdSearchFile_B8
+/* 52458 80061C58 1000B127 */   addiu     $s1, $sp, 0x10
+.LCdSearchFile_98:
+/* 5245C 80061C5C 1700A010 */  beqz       $a1, .LCdSearchFile_F8
+/* 52460 80061C60 00000000 */   nop
+/* 52464 80061C64 01001026 */  addiu      $s0, $s0, 0x1
+/* 52468 80061C68 000025A2 */  sb         $a1, 0x0($s1)
+/* 5246C 80061C6C 00000592 */  lbu        $a1, 0x0($s0)
+/* 52470 80061C70 00000000 */  nop
+/* 52474 80061C74 F9FFA214 */  bne        $a1, $v0, .LCdSearchFile_98
+/* 52478 80061C78 01003126 */   addiu     $s1, $s1, 0x1
+.LCdSearchFile_B8:
+/* 5247C 80061C7C 00000292 */  lbu        $v0, 0x0($s0)
+/* 52480 80061C80 00000000 */  nop
+/* 52484 80061C84 0E004010 */  beqz       $v0, .LCdSearchFile_FC
+/* 52488 80061C88 0800422A */   slti      $v0, $s2, 0x8
+/* 5248C 80061C8C 01001026 */  addiu      $s0, $s0, 0x1
+/* 52490 80061C90 000020A2 */  sb         $zero, 0x0($s1)
+/* 52494 80061C94 6488010C */  jal        CD_searchdir
+/* 52498 80061C98 1000A527 */   addiu     $a1, $sp, 0x10
+/* 5249C 80061C9C 21204000 */  addu       $a0, $v0, $zero
+/* 524A0 80061CA0 FFFF0224 */  addiu      $v0, $zero, -0x1
+/* 524A4 80061CA4 E3FF8210 */  beq        $a0, $v0, .LCdSearchFile_70
+/* 524A8 80061CA8 00000000 */   nop
+/* 524AC 80061CAC 01005226 */  addiu      $s2, $s2, 0x1
+/* 524B0 80061CB0 0800422A */  slti       $v0, $s2, 0x8
+/* 524B4 80061CB4 E4FF4014 */  bnez       $v0, .LCdSearchFile_84
+/* 524B8 80061CB8 00000000 */   nop
+.LCdSearchFile_F8:
+/* 524BC 80061CBC 0800422A */  slti       $v0, $s2, 0x8
+.LCdSearchFile_FC:
+/* 524C0 80061CC0 0C004014 */  bnez       $v0, .LCdSearchFile_130
+/* 524C4 80061CC4 00000000 */   nop
+/* 524C8 80061CC8 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 524CC 80061CCC 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 524D0 80061CD0 00000000 */  nop
+/* 524D4 80061CD4 64004018 */  blez       $v0, .LCdSearchFile_2A4
+/* 524D8 80061CD8 21286002 */   addu      $a1, $s3, $zero
+/* 524DC 80061CDC 0180043C */  lui        $a0, %hi(ISO9660_rodata_0)
+/* 524E0 80061CE0 101E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_0)
+/* 524E4 80061CE4 607A010C */  jal        printf
+/* 524E8 80061CE8 21304002 */   addu      $a2, $s2, $zero
+/* 524EC 80061CEC 9B870108 */  j          .LCdSearchFile_2A8
+/* 524F0 80061CF0 21100000 */   addu      $v0, $zero, $zero
+.LCdSearchFile_130:
+/* 524F4 80061CF4 1000A293 */  lbu        $v0, 0x10($sp)
+/* 524F8 80061CF8 00000000 */  nop
+/* 524FC 80061CFC 0A004014 */  bnez       $v0, .LCdSearchFile_164
+/* 52500 80061D00 00000000 */   nop
+/* 52504 80061D04 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52508 80061D08 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 5250C 80061D0C 00000000 */  nop
+/* 52510 80061D10 55004018 */  blez       $v0, .LCdSearchFile_2A4
+/* 52514 80061D14 21286002 */   addu      $a1, $s3, $zero
+/* 52518 80061D18 0180043C */  lui        $a0, %hi(ISO9660_rodata_1C)
+/* 5251C 80061D1C 2C1E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_1C)
+/* 52520 80061D20 98870108 */  j          .LCdSearchFile_29C
+/* 52524 80061D24 00000000 */   nop
+.LCdSearchFile_164:
+/* 52528 80061D28 8E88010C */  jal        CD_cachefile
+/* 5252C 80061D2C 000020A2 */   sb        $zero, 0x0($s1)
+/* 52530 80061D30 0C004014 */  bnez       $v0, .LCdSearchFile_1A0
+/* 52534 80061D34 00000000 */   nop
+/* 52538 80061D38 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 5253C 80061D3C 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52540 80061D40 00000000 */  nop
+/* 52544 80061D44 49004018 */  blez       $v0, .LCdSearchFile_2A8
+/* 52548 80061D48 21100000 */   addu      $v0, $zero, $zero
+/* 5254C 80061D4C 0180043C */  lui        $a0, %hi(ISO9660_rodata_34)
+/* 52550 80061D50 441E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_34)
+/* 52554 80061D54 607A010C */  jal        printf
+/* 52558 80061D58 00000000 */   nop
+/* 5255C 80061D5C 9B870108 */  j          .LCdSearchFile_2A8
+/* 52560 80061D60 21100000 */   addu      $v0, $zero, $zero
+.LCdSearchFile_1A0:
+/* 52564 80061D64 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52568 80061D68 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 5256C 80061D6C 00000000 */  nop
+/* 52570 80061D70 02004228 */  slti       $v0, $v0, 0x2
+/* 52574 80061D74 06004014 */  bnez       $v0, .LCdSearchFile_1CC
+/* 52578 80061D78 21900000 */   addu      $s2, $zero, $zero
+/* 5257C 80061D7C 0180043C */  lui        $a0, %hi(ISO9660_rodata_50)
+/* 52580 80061D80 601E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_50)
+/* 52584 80061D84 607A010C */  jal        printf
+/* 52588 80061D88 1000A527 */   addiu     $a1, $sp, 0x10
+/* 5258C 80061D8C 21900000 */  addu       $s2, $zero, $zero
+.LCdSearchFile_1CC:
+/* 52590 80061D90 0780023C */  lui        $v0, %hi(file + 0x8)
+/* 52594 80061D94 08FB4224 */  addiu      $v0, $v0, %lo(file + 0x8)
+/* 52598 80061D98 F8FF5024 */  addiu      $s0, $v0, -0x8
+/* 5259C 80061D9C 21984000 */  addu       $s3, $v0, $zero
+/* 525A0 80061DA0 21880000 */  addu       $s1, $zero, $zero
+.LCdSearchFile_1E0:
+/* 525A4 80061DA4 0780013C */  lui        $at, %hi(file + 0x8)
+/* 525A8 80061DA8 21083100 */  addu       $at, $at, $s1
+/* 525AC 80061DAC 08FB2290 */  lbu        $v0, %lo(file + 0x8)($at)
+/* 525B0 80061DB0 00000000 */  nop
+/* 525B4 80061DB4 23004010 */  beqz       $v0, .LCdSearchFile_280
+/* 525B8 80061DB8 21206002 */   addu      $a0, $s3, $zero
+/* 525BC 80061DBC A487010C */  jal        _cmp
+/* 525C0 80061DC0 1000A527 */   addiu     $a1, $sp, 0x10
+/* 525C4 80061DC4 19004010 */  beqz       $v0, .LCdSearchFile_268
+/* 525C8 80061DC8 00000000 */   nop
+/* 525CC 80061DCC 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 525D0 80061DD0 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 525D4 80061DD4 00000000 */  nop
+/* 525D8 80061DD8 02004228 */  slti       $v0, $v0, 0x2
+/* 525DC 80061DDC 05004014 */  bnez       $v0, .LCdSearchFile_230
+/* 525E0 80061DE0 00000000 */   nop
+/* 525E4 80061DE4 0180043C */  lui        $a0, %hi(ISO9660_rodata_70)
+/* 525E8 80061DE8 801E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_70)
+/* 525EC 80061DEC 607A010C */  jal        printf
+/* 525F0 80061DF0 1000A527 */   addiu     $a1, $sp, 0x10
+.LCdSearchFile_230:
+/* 525F4 80061DF4 0000028E */  lw         $v0, 0x0($s0)
+/* 525F8 80061DF8 0400038E */  lw         $v1, 0x4($s0)
+/* 525FC 80061DFC 0800048E */  lw         $a0, 0x8($s0)
+/* 52600 80061E00 0C00058E */  lw         $a1, 0xC($s0)
+/* 52604 80061E04 000082AE */  sw         $v0, 0x0($s4)
+/* 52608 80061E08 040083AE */  sw         $v1, 0x4($s4)
+/* 5260C 80061E0C 080084AE */  sw         $a0, 0x8($s4)
+/* 52610 80061E10 0C0085AE */  sw         $a1, 0xC($s4)
+/* 52614 80061E14 1000028E */  lw         $v0, 0x10($s0)
+/* 52618 80061E18 1400038E */  lw         $v1, 0x14($s0)
+/* 5261C 80061E1C 100082AE */  sw         $v0, 0x10($s4)
+/* 52620 80061E20 140083AE */  sw         $v1, 0x14($s4)
+/* 52624 80061E24 9B870108 */  j          .LCdSearchFile_2A8
+/* 52628 80061E28 21100002 */   addu      $v0, $s0, $zero
+.LCdSearchFile_268:
+/* 5262C 80061E2C 18001026 */  addiu      $s0, $s0, 0x18
+/* 52630 80061E30 18007326 */  addiu      $s3, $s3, 0x18
+/* 52634 80061E34 01005226 */  addiu      $s2, $s2, 0x1
+/* 52638 80061E38 4000422A */  slti       $v0, $s2, 0x40
+/* 5263C 80061E3C D9FF4014 */  bnez       $v0, .LCdSearchFile_1E0
+/* 52640 80061E40 18003126 */   addiu     $s1, $s1, 0x18
+.LCdSearchFile_280:
+/* 52644 80061E44 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52648 80061E48 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 5264C 80061E4C 00000000 */  nop
+/* 52650 80061E50 05004018 */  blez       $v0, .LCdSearchFile_2A4
+/* 52654 80061E54 1000A527 */   addiu     $a1, $sp, 0x10
+/* 52658 80061E58 0180043C */  lui        $a0, %hi(ISO9660_rodata_7C)
+/* 5265C 80061E5C 8C1E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_7C)
+.LCdSearchFile_29C:
+/* 52660 80061E60 607A010C */  jal        printf
+/* 52664 80061E64 00000000 */   nop
+.LCdSearchFile_2A4:
+/* 52668 80061E68 21100000 */  addu       $v0, $zero, $zero
+.LCdSearchFile_2A8:
+/* 5266C 80061E6C 4400BF8F */  lw         $ra, 0x44($sp)
+/* 52670 80061E70 4000B48F */  lw         $s4, 0x40($sp)
+/* 52674 80061E74 3C00B38F */  lw         $s3, 0x3C($sp)
+/* 52678 80061E78 3800B28F */  lw         $s2, 0x38($sp)
+/* 5267C 80061E7C 3400B18F */  lw         $s1, 0x34($sp)
+/* 52680 80061E80 3000B08F */  lw         $s0, 0x30($sp)
+/* 52684 80061E84 4800BD27 */  addiu      $sp, $sp, 0x48
+/* 52688 80061E88 0800E003 */  jr         $ra
+/* 5268C 80061E8C 00000000 */   nop
+.size CdSearchFile, . - CdSearchFile
+
+glabel _cmp
+/* 52690 80061E90 E8FFBD27 */  addiu      $sp, $sp, -0x18
+/* 52694 80061E94 1000BFAF */  sw         $ra, 0x10($sp)
+/* 52698 80061E98 6D89010C */  jal        strncmp
+/* 5269C 80061E9C 0C000624 */   addiu     $a2, $zero, 0xC
+/* 526A0 80061EA0 1000BF8F */  lw         $ra, 0x10($sp)
+/* 526A4 80061EA4 0100422C */  sltiu      $v0, $v0, 0x1
+/* 526A8 80061EA8 0800E003 */  jr         $ra
+/* 526AC 80061EAC 1800BD27 */   addiu     $sp, $sp, 0x18
+.size _cmp, . - _cmp
+
+glabel CD_newmedia
+/* 526B0 80061EB0 C0FFBD27 */  addiu      $sp, $sp, -0x40
+/* 526B4 80061EB4 01000424 */  addiu      $a0, $zero, 0x1
+/* 526B8 80061EB8 10000524 */  addiu      $a1, $zero, 0x10
+/* 526BC 80061EBC 2000B0AF */  sw         $s0, 0x20($sp)
+/* 526C0 80061EC0 0780103C */  lui        $s0, %hi(load_buf)
+/* 526C4 80061EC4 00171026 */  addiu      $s0, $s0, %lo(load_buf)
+/* 526C8 80061EC8 21300002 */  addu       $a2, $s0, $zero
+/* 526CC 80061ECC 3800BFAF */  sw         $ra, 0x38($sp)
+/* 526D0 80061ED0 3400B5AF */  sw         $s5, 0x34($sp)
+/* 526D4 80061ED4 3000B4AF */  sw         $s4, 0x30($sp)
+/* 526D8 80061ED8 2C00B3AF */  sw         $s3, 0x2C($sp)
+/* 526DC 80061EDC 2800B2AF */  sw         $s2, 0x28($sp)
+/* 526E0 80061EE0 3989010C */  jal        cd_read
+/* 526E4 80061EE4 2400B1AF */   sw        $s1, 0x24($sp)
+/* 526E8 80061EE8 21884000 */  addu       $s1, $v0, $zero
+/* 526EC 80061EEC 01000224 */  addiu      $v0, $zero, 0x1
+/* 526F0 80061EF0 0C002212 */  beq        $s1, $v0, .LCD_newmedia_74
+/* 526F4 80061EF4 01000426 */   addiu     $a0, $s0, 0x1
+/* 526F8 80061EF8 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 526FC 80061EFC 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52700 80061F00 00000000 */  nop
+/* 52704 80061F04 98004018 */  blez       $v0, .LCD_newmedia_2B8
+/* 52708 80061F08 21100000 */   addu      $v0, $zero, $zero
+/* 5270C 80061F0C 0180043C */  lui        $a0, %hi(ISO9660_rodata_8C)
+/* 52710 80061F10 9C1E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_8C)
+/* 52714 80061F14 607A010C */  jal        printf
+/* 52718 80061F18 00000000 */   nop
+/* 5271C 80061F1C 5A880108 */  j          .LCD_newmedia_2B8
+/* 52720 80061F20 21100000 */   addu      $v0, $zero, $zero
+.LCD_newmedia_74:
+/* 52724 80061F24 0180053C */  lui        $a1, %hi(ISO9660_rodata_B8)
+/* 52728 80061F28 C81EA524 */  addiu      $a1, $a1, %lo(ISO9660_rodata_B8)
+/* 5272C 80061F2C 6D89010C */  jal        strncmp
+/* 52730 80061F30 05000624 */   addiu     $a2, $zero, 0x5
+/* 52734 80061F34 0C004010 */  beqz       $v0, .LCD_newmedia_B8
+/* 52738 80061F38 00000000 */   nop
+/* 5273C 80061F3C 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52740 80061F40 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52744 80061F44 00000000 */  nop
+/* 52748 80061F48 87004018 */  blez       $v0, .LCD_newmedia_2B8
+/* 5274C 80061F4C 21100000 */   addu      $v0, $zero, $zero
+/* 52750 80061F50 0180043C */  lui        $a0, %hi(ISO9660_rodata_C0)
+/* 52754 80061F54 D01E8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_C0)
+/* 52758 80061F58 607A010C */  jal        printf
+/* 5275C 80061F5C 00000000 */   nop
+/* 52760 80061F60 5A880108 */  j          .LCD_newmedia_2B8
+/* 52764 80061F64 21100000 */   addu      $v0, $zero, $zero
+.LCD_newmedia_B8:
+/* 52768 80061F68 0780053C */  lui        $a1, %hi(load_buf + 0x8C)
+/* 5276C 80061F6C 8C17A524 */  addiu      $a1, $a1, %lo(load_buf + 0x8C)
+/* 52770 80061F70 0300A288 */  lwl        $v0, 0x3($a1)
+/* 52774 80061F74 0000A298 */  lwr        $v0, 0x0($a1)
+/* 52778 80061F78 00000000 */  nop
+/* 5277C 80061F7C 1B00A2AB */  swl        $v0, 0x1B($sp)
+/* 52780 80061F80 1800A2BB */  swr        $v0, 0x18($sp)
+/* 52784 80061F84 01000424 */  addiu      $a0, $zero, 0x1
+/* 52788 80061F88 1800A58F */  lw         $a1, 0x18($sp)
+/* 5278C 80061F8C 3989010C */  jal        cd_read
+/* 52790 80061F90 21300002 */   addu      $a2, $s0, $zero
+/* 52794 80061F94 0D005110 */  beq        $v0, $s1, .LCD_newmedia_11C
+/* 52798 80061F98 00000000 */   nop
+/* 5279C 80061F9C 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 527A0 80061FA0 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 527A4 80061FA4 00000000 */  nop
+/* 527A8 80061FA8 6F004018 */  blez       $v0, .LCD_newmedia_2B8
+/* 527AC 80061FAC 21100000 */   addu      $v0, $zero, $zero
+/* 527B0 80061FB0 1800A58F */  lw         $a1, 0x18($sp)
+/* 527B4 80061FB4 0180043C */  lui        $a0, %hi(ISO9660_rodata_F0)
+/* 527B8 80061FB8 001F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_F0)
+/* 527BC 80061FBC 607A010C */  jal        printf
+/* 527C0 80061FC0 00000000 */   nop
+/* 527C4 80061FC4 5A880108 */  j          .LCD_newmedia_2B8
+/* 527C8 80061FC8 21100000 */   addu      $v0, $zero, $zero
+.LCD_newmedia_11C:
+/* 527CC 80061FCC 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 527D0 80061FD0 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 527D4 80061FD4 00000000 */  nop
+/* 527D8 80061FD8 02004228 */  slti       $v0, $v0, 0x2
+/* 527DC 80061FDC 05004014 */  bnez       $v0, .LCD_newmedia_144
+/* 527E0 80061FE0 21880002 */   addu      $s1, $s0, $zero
+/* 527E4 80061FE4 0180043C */  lui        $a0, %hi(ISO9660_rodata_114)
+/* 527E8 80061FE8 241F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_114)
+/* 527EC 80061FEC 607A010C */  jal        printf
+/* 527F0 80061FF0 00000000 */   nop
+.LCD_newmedia_144:
+/* 527F4 80061FF4 00082226 */  addiu      $v0, $s1, 0x800
+/* 527F8 80061FF8 2B102202 */  sltu       $v0, $s1, $v0
+/* 527FC 80061FFC 44004010 */  beqz       $v0, .LCD_newmedia_260
+/* 52800 80062000 21380000 */   addu      $a3, $zero, $zero
+/* 52804 80062004 0780143C */  lui        $s4, %hi(dire + 0x8)
+/* 52808 80062008 08019426 */  addiu      $s4, $s4, %lo(dire + 0x8)
+/* 5280C 8006200C 04009526 */  addiu      $s5, $s4, 0x4
+.LCD_newmedia_160:
+/* 52810 80062010 00002292 */  lbu        $v0, 0x0($s1)
+/* 52814 80062014 00000000 */  nop
+/* 52818 80062018 3D004010 */  beqz       $v0, .LCD_newmedia_260
+/* 5281C 8006201C 40100700 */   sll       $v0, $a3, 1
+/* 52820 80062020 21104700 */  addu       $v0, $v0, $a3
+/* 52824 80062024 80100200 */  sll        $v0, $v0, 2
+/* 52828 80062028 23104700 */  subu       $v0, $v0, $a3
+/* 5282C 8006202C 80800200 */  sll        $s0, $v0, 2
+/* 52830 80062030 21101402 */  addu       $v0, $s0, $s4
+/* 52834 80062034 0500238A */  lwl        $v1, 0x5($s1)
+/* 52838 80062038 0200239A */  lwr        $v1, 0x2($s1)
+/* 5283C 8006203C 00000000 */  nop
+/* 52840 80062040 030043A8 */  swl        $v1, 0x3($v0)
+/* 52844 80062044 000043B8 */  swr        $v1, 0x0($v0)
+/* 52848 80062048 21901502 */  addu       $s2, $s0, $s5
+/* 5284C 8006204C 21204002 */  addu       $a0, $s2, $zero
+/* 52850 80062050 06002292 */  lbu        $v0, 0x6($s1)
+/* 52854 80062054 0100F324 */  addiu      $s3, $a3, 0x1
+/* 52858 80062058 0780013C */  lui        $at, %hi(dire)
+/* 5285C 8006205C 21083000 */  addu       $at, $at, $s0
+/* 52860 80062060 000133AC */  sw         $s3, %lo(dire)($at)
+/* 52864 80062064 0780013C */  lui        $at, %hi(dire + 0x4)
+/* 52868 80062068 21083000 */  addu       $at, $at, $s0
+/* 5286C 8006206C 040122AC */  sw         $v0, %lo(dire + 0x4)($at)
+/* 52870 80062070 00002692 */  lbu        $a2, 0x0($s1)
+/* 52874 80062074 267A010C */  jal        memcpy
+/* 52878 80062078 08002526 */   addiu     $a1, $s1, 0x8
+/* 5287C 8006207C 00002292 */  lbu        $v0, 0x0($s1)
+/* 52880 80062080 00000000 */  nop
+/* 52884 80062084 21104202 */  addu       $v0, $s2, $v0
+/* 52888 80062088 000040A0 */  sb         $zero, 0x0($v0)
+/* 5288C 8006208C 00002392 */  lbu        $v1, 0x0($s1)
+/* 52890 80062090 00000000 */  nop
+/* 52894 80062094 01006230 */  andi       $v0, $v1, 0x1
+/* 52898 80062098 08004224 */  addiu      $v0, $v0, 0x8
+/* 5289C 8006209C 21186200 */  addu       $v1, $v1, $v0
+/* 528A0 800620A0 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 528A4 800620A4 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 528A8 800620A8 00000000 */  nop
+/* 528AC 800620AC 02004228 */  slti       $v0, $v0, 0x2
+/* 528B0 800620B0 0E004014 */  bnez       $v0, .LCD_newmedia_23C
+/* 528B4 800620B4 21882302 */   addu      $s1, $s1, $v1
+/* 528B8 800620B8 0780013C */  lui        $at, %hi(dire + 0x8)
+/* 528BC 800620BC 21083000 */  addu       $at, $at, $s0
+/* 528C0 800620C0 0801258C */  lw         $a1, %lo(dire + 0x8)($at)
+/* 528C4 800620C4 0780013C */  lui        $at, %hi(dire)
+/* 528C8 800620C8 21083000 */  addu       $at, $at, $s0
+/* 528CC 800620CC 0001268C */  lw         $a2, %lo(dire)($at)
+/* 528D0 800620D0 0780013C */  lui        $at, %hi(dire + 0x4)
+/* 528D4 800620D4 21083000 */  addu       $at, $at, $s0
+/* 528D8 800620D8 0401278C */  lw         $a3, %lo(dire + 0x4)($at)
+/* 528DC 800620DC 0180043C */  lui        $a0, %hi(ISO9660_rodata_134)
+/* 528E0 800620E0 441F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_134)
+/* 528E4 800620E4 607A010C */  jal        printf
+/* 528E8 800620E8 1000B2AF */   sw        $s2, 0x10($sp)
+.LCD_newmedia_23C:
+/* 528EC 800620EC 21386002 */  addu       $a3, $s3, $zero
+/* 528F0 800620F0 8000E228 */  slti       $v0, $a3, 0x80
+/* 528F4 800620F4 10004010 */  beqz       $v0, .LCD_newmedia_288
+/* 528F8 800620F8 00000000 */   nop
+/* 528FC 800620FC 0780023C */  lui        $v0, %hi(load_buf + 0x800)
+/* 52900 80062100 001F4224 */  addiu      $v0, $v0, %lo(load_buf + 0x800)
+/* 52904 80062104 2B102202 */  sltu       $v0, $s1, $v0
+/* 52908 80062108 C1FF4014 */  bnez       $v0, .LCD_newmedia_160
+/* 5290C 8006210C 00000000 */   nop
+.LCD_newmedia_260:
+/* 52910 80062110 8000E228 */  slti       $v0, $a3, 0x80
+/* 52914 80062114 08004010 */  beqz       $v0, .LCD_newmedia_288
+/* 52918 80062118 40100700 */   sll       $v0, $a3, 1
+/* 5291C 8006211C 21104700 */  addu       $v0, $v0, $a3
+/* 52920 80062120 80100200 */  sll        $v0, $v0, 2
+/* 52924 80062124 23104700 */  subu       $v0, $v0, $a3
+/* 52928 80062128 80100200 */  sll        $v0, $v0, 2
+/* 5292C 8006212C 0780013C */  lui        $at, %hi(dire + 0x4)
+/* 52930 80062130 21082200 */  addu       $at, $at, $v0
+/* 52934 80062134 040120AC */  sw         $zero, %lo(dire + 0x4)($at)
+.LCD_newmedia_288:
+/* 52938 80062138 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 5293C 8006213C 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52940 80062140 0780013C */  lui        $at, %hi(ISO9660_data_0)
+/* 52944 80062144 70EF20AC */  sw         $zero, %lo(ISO9660_data_0)($at)
+/* 52948 80062148 02004228 */  slti       $v0, $v0, 0x2
+/* 5294C 8006214C 06004014 */  bnez       $v0, .LCD_newmedia_2B8
+/* 52950 80062150 01000224 */   addiu     $v0, $zero, 0x1
+/* 52954 80062154 0180043C */  lui        $a0, %hi(ISO9660_rodata_148)
+/* 52958 80062158 581F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_148)
+/* 5295C 8006215C 607A010C */  jal        printf
+/* 52960 80062160 2128E000 */   addu      $a1, $a3, $zero
+/* 52964 80062164 01000224 */  addiu      $v0, $zero, 0x1
+.LCD_newmedia_2B8:
+/* 52968 80062168 3800BF8F */  lw         $ra, 0x38($sp)
+/* 5296C 8006216C 3400B58F */  lw         $s5, 0x34($sp)
+/* 52970 80062170 3000B48F */  lw         $s4, 0x30($sp)
+/* 52974 80062174 2C00B38F */  lw         $s3, 0x2C($sp)
+/* 52978 80062178 2800B28F */  lw         $s2, 0x28($sp)
+/* 5297C 8006217C 2400B18F */  lw         $s1, 0x24($sp)
+/* 52980 80062180 2000B08F */  lw         $s0, 0x20($sp)
+/* 52984 80062184 4000BD27 */  addiu      $sp, $sp, 0x40
+/* 52988 80062188 0800E003 */  jr         $ra
+/* 5298C 8006218C 00000000 */   nop
+.size CD_newmedia, . - CD_newmedia
+
+glabel CD_searchdir
+/* 52990 80062190 D8FFBD27 */  addiu      $sp, $sp, -0x28
+/* 52994 80062194 1C00B3AF */  sw         $s3, 0x1C($sp)
+/* 52998 80062198 21988000 */  addu       $s3, $a0, $zero
+/* 5299C 8006219C 2000B4AF */  sw         $s4, 0x20($sp)
+/* 529A0 800621A0 21A0A000 */  addu       $s4, $a1, $zero
+/* 529A4 800621A4 1000B0AF */  sw         $s0, 0x10($sp)
+/* 529A8 800621A8 21800000 */  addu       $s0, $zero, $zero
+/* 529AC 800621AC 1800B2AF */  sw         $s2, 0x18($sp)
+/* 529B0 800621B0 0780123C */  lui        $s2, %hi(dire + 0xC)
+/* 529B4 800621B4 0C015226 */  addiu      $s2, $s2, %lo(dire + 0xC)
+/* 529B8 800621B8 1400B1AF */  sw         $s1, 0x14($sp)
+/* 529BC 800621BC 21880000 */  addu       $s1, $zero, $zero
+/* 529C0 800621C0 2400BFAF */  sw         $ra, 0x24($sp)
+.LCD_searchdir_34:
+/* 529C4 800621C4 0780013C */  lui        $at, %hi(dire + 0x4)
+/* 529C8 800621C8 21083100 */  addu       $at, $at, $s1
+/* 529CC 800621CC 0401228C */  lw         $v0, %lo(dire + 0x4)($at)
+/* 529D0 800621D0 00000000 */  nop
+/* 529D4 800621D4 0E004010 */  beqz       $v0, .LCD_searchdir_80
+/* 529D8 800621D8 00000000 */   nop
+/* 529DC 800621DC 07005314 */  bne        $v0, $s3, .LCD_searchdir_6C
+/* 529E0 800621E0 21208002 */   addu      $a0, $s4, $zero
+/* 529E4 800621E4 5489010C */  jal        strcmp
+/* 529E8 800621E8 21284002 */   addu      $a1, $s2, $zero
+/* 529EC 800621EC 04004014 */  bnez       $v0, .LCD_searchdir_70
+/* 529F0 800621F0 2C005226 */   addiu     $s2, $s2, 0x2C
+/* 529F4 800621F4 85880108 */  j          .LCD_searchdir_84
+/* 529F8 800621F8 01000226 */   addiu     $v0, $s0, 0x1
+.LCD_searchdir_6C:
+/* 529FC 800621FC 2C005226 */  addiu      $s2, $s2, 0x2C
+.LCD_searchdir_70:
+/* 52A00 80062200 01001026 */  addiu      $s0, $s0, 0x1
+/* 52A04 80062204 8000022A */  slti       $v0, $s0, 0x80
+/* 52A08 80062208 EEFF4014 */  bnez       $v0, .LCD_searchdir_34
+/* 52A0C 8006220C 2C003126 */   addiu     $s1, $s1, 0x2C
+.LCD_searchdir_80:
+/* 52A10 80062210 FFFF0224 */  addiu      $v0, $zero, -0x1
+.LCD_searchdir_84:
+/* 52A14 80062214 2400BF8F */  lw         $ra, 0x24($sp)
+/* 52A18 80062218 2000B48F */  lw         $s4, 0x20($sp)
+/* 52A1C 8006221C 1C00B38F */  lw         $s3, 0x1C($sp)
+/* 52A20 80062220 1800B28F */  lw         $s2, 0x18($sp)
+/* 52A24 80062224 1400B18F */  lw         $s1, 0x14($sp)
+/* 52A28 80062228 1000B08F */  lw         $s0, 0x10($sp)
+/* 52A2C 8006222C 2800BD27 */  addiu      $sp, $sp, 0x28
+/* 52A30 80062230 0800E003 */  jr         $ra
+/* 52A34 80062234 00000000 */   nop
+.size CD_searchdir, . - CD_searchdir
+
+glabel CD_cachefile
+/* 52A38 80062238 0780023C */  lui        $v0, %hi(ISO9660_data_0)
+/* 52A3C 8006223C 70EF428C */  lw         $v0, %lo(ISO9660_data_0)($v0)
+/* 52A40 80062240 C0FFBD27 */  addiu      $sp, $sp, -0x40
+/* 52A44 80062244 3800B6AF */  sw         $s6, 0x38($sp)
+/* 52A48 80062248 21B08000 */  addu       $s6, $a0, $zero
+/* 52A4C 8006224C 3C00BFAF */  sw         $ra, 0x3C($sp)
+/* 52A50 80062250 3400B5AF */  sw         $s5, 0x34($sp)
+/* 52A54 80062254 3000B4AF */  sw         $s4, 0x30($sp)
+/* 52A58 80062258 2C00B3AF */  sw         $s3, 0x2C($sp)
+/* 52A5C 8006225C 2800B2AF */  sw         $s2, 0x28($sp)
+/* 52A60 80062260 2400B1AF */  sw         $s1, 0x24($sp)
+/* 52A64 80062264 9300C212 */  beq        $s6, $v0, .LCD_cachefile_27C
+/* 52A68 80062268 2000B0AF */   sw        $s0, 0x20($sp)
+/* 52A6C 8006226C 01000424 */  addiu      $a0, $zero, 0x1
+/* 52A70 80062270 40101600 */  sll        $v0, $s6, 1
+/* 52A74 80062274 21105600 */  addu       $v0, $v0, $s6
+/* 52A78 80062278 80100200 */  sll        $v0, $v0, 2
+/* 52A7C 8006227C 23105600 */  subu       $v0, $v0, $s6
+/* 52A80 80062280 80100200 */  sll        $v0, $v0, 2
+/* 52A84 80062284 0780013C */  lui        $at, %hi(file + 0x5DC)
+/* 52A88 80062288 21082200 */  addu       $at, $at, $v0
+/* 52A8C 8006228C DC00258C */  lw         $a1, %lo(file + 0x5DC)($at)
+/* 52A90 80062290 0780103C */  lui        $s0, %hi(load_buf)
+/* 52A94 80062294 00171026 */  addiu      $s0, $s0, %lo(load_buf)
+/* 52A98 80062298 3989010C */  jal        cd_read
+/* 52A9C 8006229C 21300002 */   addu      $a2, $s0, $zero
+/* 52AA0 800622A0 01000324 */  addiu      $v1, $zero, 0x1
+/* 52AA4 800622A4 0C004310 */  beq        $v0, $v1, .LCD_cachefile_A0
+/* 52AA8 800622A8 00000000 */   nop
+/* 52AAC 800622AC 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52AB0 800622B0 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52AB4 800622B4 00000000 */  nop
+/* 52AB8 800622B8 7F004018 */  blez       $v0, .LCD_cachefile_280
+/* 52ABC 800622BC FFFF0224 */   addiu     $v0, $zero, -0x1
+/* 52AC0 800622C0 0180043C */  lui        $a0, %hi(ISO9660_rodata_16C)
+/* 52AC4 800622C4 7C1F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_16C)
+/* 52AC8 800622C8 607A010C */  jal        printf
+/* 52ACC 800622CC 00000000 */   nop
+/* 52AD0 800622D0 2E890108 */  j          .LCD_cachefile_280
+/* 52AD4 800622D4 FFFF0224 */   addiu     $v0, $zero, -0x1
+.LCD_cachefile_A0:
+/* 52AD8 800622D8 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52ADC 800622DC 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52AE0 800622E0 00000000 */  nop
+/* 52AE4 800622E4 02004228 */  slti       $v0, $v0, 0x2
+/* 52AE8 800622E8 06004014 */  bnez       $v0, .LCD_cachefile_CC
+/* 52AEC 800622EC 00080226 */   addiu     $v0, $s0, 0x800
+/* 52AF0 800622F0 0180043C */  lui        $a0, %hi(ISO9660_rodata_18C)
+/* 52AF4 800622F4 9C1F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_18C)
+/* 52AF8 800622F8 607A010C */  jal        printf
+/* 52AFC 800622FC 00000000 */   nop
+/* 52B00 80062300 00080226 */  addiu      $v0, $s0, 0x800
+.LCD_cachefile_CC:
+/* 52B04 80062304 2B100202 */  sltu       $v0, $s0, $v0
+/* 52B08 80062308 56004010 */  beqz       $v0, .LCD_cachefile_22C
+/* 52B0C 8006230C 21900000 */   addu      $s2, $zero, $zero
+/* 52B10 80062310 0780153C */  lui        $s5, %hi(file)
+/* 52B14 80062314 00FBB526 */  addiu      $s5, $s5, %lo(file)
+/* 52B18 80062318 0800B326 */  addiu      $s3, $s5, 0x8
+/* 52B1C 8006231C 21880000 */  addu       $s1, $zero, $zero
+/* 52B20 80062320 21A0A002 */  addu       $s4, $s5, $zero
+.LCD_cachefile_EC:
+/* 52B24 80062324 00000292 */  lbu        $v0, 0x0($s0)
+/* 52B28 80062328 00000000 */  nop
+/* 52B2C 8006232C 4D004010 */  beqz       $v0, .LCD_cachefile_22C
+/* 52B30 80062330 00000000 */   nop
+/* 52B34 80062334 0500028A */  lwl        $v0, 0x5($s0)
+/* 52B38 80062338 0200029A */  lwr        $v0, 0x2($s0)
+/* 52B3C 8006233C 00000000 */  nop
+/* 52B40 80062340 1B00A2AB */  swl        $v0, 0x1B($sp)
+/* 52B44 80062344 1800A2BB */  swr        $v0, 0x18($sp)
+/* 52B48 80062348 1800A48F */  lw         $a0, 0x18($sp)
+/* 52B4C 8006234C 9A80010C */  jal        CdIntToPos
+/* 52B50 80062350 21288002 */   addu      $a1, $s4, $zero
+/* 52B54 80062354 0400A226 */  addiu      $v0, $s5, 0x4
+/* 52B58 80062358 21102202 */  addu       $v0, $s1, $v0
+/* 52B5C 8006235C 0D00038A */  lwl        $v1, 0xD($s0)
+/* 52B60 80062360 0A00039A */  lwr        $v1, 0xA($s0)
+/* 52B64 80062364 00000000 */  nop
+/* 52B68 80062368 030043A8 */  swl        $v1, 0x3($v0)
+/* 52B6C 8006236C 000043B8 */  swr        $v1, 0x0($v0)
+/* 52B70 80062370 05004012 */  beqz       $s2, .LCD_cachefile_150
+/* 52B74 80062374 01000224 */   addiu     $v0, $zero, 0x1
+/* 52B78 80062378 07004212 */  beq        $s2, $v0, .LCD_cachefile_160
+/* 52B7C 8006237C 21206002 */   addu      $a0, $s3, $zero
+/* 52B80 80062380 EE880108 */  j          .LCD_cachefile_180
+/* 52B84 80062384 00000000 */   nop
+.LCD_cachefile_150:
+/* 52B88 80062388 0180023C */  lui        $v0, %hi(ISO9660_rodata_1A8)
+/* 52B8C 8006238C B81F4294 */  lhu        $v0, %lo(ISO9660_rodata_1A8)($v0)
+/* 52B90 80062390 F5880108 */  j          .LCD_cachefile_19C
+/* 52B94 80062394 0800A2A6 */   sh        $v0, 0x8($s5)
+.LCD_cachefile_160:
+/* 52B98 80062398 0180023C */  lui        $v0, %hi(ISO9660_rodata_1AC)
+/* 52B9C 8006239C BC1F4284 */  lh         $v0, %lo(ISO9660_rodata_1AC)($v0)
+/* 52BA0 800623A0 0180033C */  lui        $v1, %hi(ISO9660_rodata_1AC + 2)
+/* 52BA4 800623A4 BE1F6380 */  lb         $v1, %lo(ISO9660_rodata_1AC + 2)($v1)
+/* 52BA8 800623A8 2000A2A6 */  sh         $v0, 0x20($s5)
+/* 52BAC 800623AC 2200A3A2 */  sb         $v1, 0x22($s5)
+/* 52BB0 800623B0 F5880108 */  j          .LCD_cachefile_19C
+/* 52BB4 800623B4 00000000 */   nop
+.LCD_cachefile_180:
+/* 52BB8 800623B8 20000692 */  lbu        $a2, 0x20($s0)
+/* 52BBC 800623BC 267A010C */  jal        memcpy
+/* 52BC0 800623C0 21000526 */   addiu     $a1, $s0, 0x21
+/* 52BC4 800623C4 20000292 */  lbu        $v0, 0x20($s0)
+/* 52BC8 800623C8 00000000 */  nop
+/* 52BCC 800623CC 21106202 */  addu       $v0, $s3, $v0
+/* 52BD0 800623D0 000040A0 */  sb         $zero, 0x0($v0)
+.LCD_cachefile_19C:
+/* 52BD4 800623D4 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52BD8 800623D8 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52BDC 800623DC 00000000 */  nop
+/* 52BE0 800623E0 02004228 */  slti       $v0, $v0, 0x2
+/* 52BE4 800623E4 12004014 */  bnez       $v0, .LCD_cachefile_1F8
+/* 52BE8 800623E8 00000000 */   nop
+/* 52BEC 800623EC 0780013C */  lui        $at, %hi(file)
+/* 52BF0 800623F0 21083100 */  addu       $at, $at, $s1
+/* 52BF4 800623F4 00FB2590 */  lbu        $a1, %lo(file)($at)
+/* 52BF8 800623F8 0780013C */  lui        $at, %hi(file + 0x1)
+/* 52BFC 800623FC 21083100 */  addu       $at, $at, $s1
+/* 52C00 80062400 01FB2690 */  lbu        $a2, %lo(file + 0x1)($at)
+/* 52C04 80062404 0780013C */  lui        $at, %hi(file + 0x2)
+/* 52C08 80062408 21083100 */  addu       $at, $at, $s1
+/* 52C0C 8006240C 02FB2790 */  lbu        $a3, %lo(file + 0x2)($at)
+/* 52C10 80062410 0780013C */  lui        $at, %hi(file + 0x4)
+/* 52C14 80062414 21083100 */  addu       $at, $at, $s1
+/* 52C18 80062418 04FB228C */  lw         $v0, %lo(file + 0x4)($at)
+/* 52C1C 8006241C 0180043C */  lui        $a0, %hi(ISO9660_rodata_1B0)
+/* 52C20 80062420 C01F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_1B0)
+/* 52C24 80062424 1400B3AF */  sw         $s3, 0x14($sp)
+/* 52C28 80062428 607A010C */  jal        printf
+/* 52C2C 8006242C 1000A2AF */   sw        $v0, 0x10($sp)
+.LCD_cachefile_1F8:
+/* 52C30 80062430 18007326 */  addiu      $s3, $s3, 0x18
+/* 52C34 80062434 18003126 */  addiu      $s1, $s1, 0x18
+/* 52C38 80062438 00000292 */  lbu        $v0, 0x0($s0)
+/* 52C3C 8006243C 01005226 */  addiu      $s2, $s2, 0x1
+/* 52C40 80062440 21800202 */  addu       $s0, $s0, $v0
+/* 52C44 80062444 4000422A */  slti       $v0, $s2, 0x40
+/* 52C48 80062448 06004010 */  beqz       $v0, .LCD_cachefile_22C
+/* 52C4C 8006244C 18009426 */   addiu     $s4, $s4, 0x18
+/* 52C50 80062450 0780023C */  lui        $v0, %hi(load_buf + 0x800)
+/* 52C54 80062454 001F4224 */  addiu      $v0, $v0, %lo(load_buf + 0x800)
+/* 52C58 80062458 2B100202 */  sltu       $v0, $s0, $v0
+/* 52C5C 8006245C B1FF4014 */  bnez       $v0, .LCD_cachefile_EC
+/* 52C60 80062460 00000000 */   nop
+.LCD_cachefile_22C:
+/* 52C64 80062464 0780013C */  lui        $at, %hi(ISO9660_data_0)
+/* 52C68 80062468 70EF36AC */  sw         $s6, %lo(ISO9660_data_0)($at)
+/* 52C6C 8006246C 4000422A */  slti       $v0, $s2, 0x40
+/* 52C70 80062470 06004010 */  beqz       $v0, .LCD_cachefile_254
+/* 52C74 80062474 40101200 */   sll       $v0, $s2, 1
+/* 52C78 80062478 21105200 */  addu       $v0, $v0, $s2
+/* 52C7C 8006247C C0100200 */  sll        $v0, $v0, 3
+/* 52C80 80062480 0780013C */  lui        $at, %hi(file + 0x8)
+/* 52C84 80062484 21082200 */  addu       $at, $at, $v0
+/* 52C88 80062488 08FB20A0 */  sb         $zero, %lo(file + 0x8)($at)
+.LCD_cachefile_254:
+/* 52C8C 8006248C 0780023C */  lui        $v0, %hi(D_80074E40)
+/* 52C90 80062490 6CEC428C */  lw         $v0, %lo(D_80074E40)($v0)
+/* 52C94 80062494 00000000 */  nop
+/* 52C98 80062498 02004228 */  slti       $v0, $v0, 0x2
+/* 52C9C 8006249C 06004014 */  bnez       $v0, .LCD_cachefile_280
+/* 52CA0 800624A0 01000224 */   addiu     $v0, $zero, 0x1
+/* 52CA4 800624A4 0180043C */  lui        $a0, %hi(ISO9660_rodata_1CC)
+/* 52CA8 800624A8 DC1F8424 */  addiu      $a0, $a0, %lo(ISO9660_rodata_1CC)
+/* 52CAC 800624AC 607A010C */  jal        printf
+/* 52CB0 800624B0 21284002 */   addu      $a1, $s2, $zero
+.LCD_cachefile_27C:
+/* 52CB4 800624B4 01000224 */  addiu      $v0, $zero, 0x1
+.LCD_cachefile_280:
+/* 52CB8 800624B8 3C00BF8F */  lw         $ra, 0x3C($sp)
+/* 52CBC 800624BC 3800B68F */  lw         $s6, 0x38($sp)
+/* 52CC0 800624C0 3400B58F */  lw         $s5, 0x34($sp)
+/* 52CC4 800624C4 3000B48F */  lw         $s4, 0x30($sp)
+/* 52CC8 800624C8 2C00B38F */  lw         $s3, 0x2C($sp)
+/* 52CCC 800624CC 2800B28F */  lw         $s2, 0x28($sp)
+/* 52CD0 800624D0 2400B18F */  lw         $s1, 0x24($sp)
+/* 52CD4 800624D4 2000B08F */  lw         $s0, 0x20($sp)
+/* 52CD8 800624D8 4000BD27 */  addiu      $sp, $sp, 0x40
+/* 52CDC 800624DC 0800E003 */  jr         $ra
+/* 52CE0 800624E0 00000000 */   nop
+.size CD_cachefile, . - CD_cachefile
+
+glabel cd_read
+/* 52CE4 800624E4 D8FFBD27 */  addiu      $sp, $sp, -0x28
+/* 52CE8 800624E8 1C00B1AF */  sw         $s1, 0x1C($sp)
+/* 52CEC 800624EC 21888000 */  addu       $s1, $a0, $zero
+/* 52CF0 800624F0 2120A000 */  addu       $a0, $a1, $zero
+/* 52CF4 800624F4 1000A527 */  addiu      $a1, $sp, 0x10
+/* 52CF8 800624F8 1800B0AF */  sw         $s0, 0x18($sp)
+/* 52CFC 800624FC 2000BFAF */  sw         $ra, 0x20($sp)
+/* 52D00 80062500 9A80010C */  jal        CdIntToPos
+/* 52D04 80062504 2180C000 */   addu      $s0, $a2, $zero
+/* 52D08 80062508 02000424 */  addiu      $a0, $zero, 0x2
+/* 52D0C 8006250C 1000A527 */  addiu      $a1, $sp, 0x10
+/* 52D10 80062510 877F010C */  jal        CdControl
+/* 52D14 80062514 21300000 */   addu      $a2, $zero, $zero
+/* 52D18 80062518 21202002 */  addu       $a0, $s1, $zero
+/* 52D1C 8006251C 21280002 */  addu       $a1, $s0, $zero
+/* 52D20 80062520 2C8B010C */  jal        CdRead
+/* 52D24 80062524 80000624 */   addiu     $a2, $zero, 0x80
+/* 52D28 80062528 21200000 */  addu       $a0, $zero, $zero
+/* 52D2C 8006252C 6D8B010C */  jal        CdReadSync
+/* 52D30 80062530 21280000 */   addu      $a1, $zero, $zero
+/* 52D34 80062534 0100422C */  sltiu      $v0, $v0, 0x1
+/* 52D38 80062538 2000BF8F */  lw         $ra, 0x20($sp)
+/* 52D3C 8006253C 1C00B18F */  lw         $s1, 0x1C($sp)
+/* 52D40 80062540 1800B08F */  lw         $s0, 0x18($sp)
+/* 52D44 80062544 2800BD27 */  addiu      $sp, $sp, 0x28
+/* 52D48 80062548 0800E003 */  jr         $ra
+/* 52D4C 8006254C 00000000 */   nop
+.size cd_read, . - cd_read
+
+glabel strcmp
+/* 5907C 8006887C 03008010 */  beqz       $a0, .Lstrcmp_10
+/* 59080 80068880 00000000 */   nop
+/* 59084 80068884 0B00A014 */  bnez       $a1, .Lstrcmp_38
+/* 59088 80068888 00000000 */   nop
+.Lstrcmp_10:
+/* 5908C 8006888C 03008514 */  bne        $a0, $a1, .Lstrcmp_20
+/* 59090 80068890 00000000 */   nop
+.Lstrcmp_18:
+/* 59094 80068894 36A20108 */  j          .Lstrcmp_5C
+/* 59098 80068898 21100000 */   addu      $v0, $zero, $zero
+.Lstrcmp_20:
+/* 5909C 8006889C 0E008014 */  bnez       $a0, .Lstrcmp_5C
+/* 590A0 800688A0 01000224 */   addiu     $v0, $zero, 0x1
+/* 590A4 800688A4 36A20108 */  j          .Lstrcmp_5C
+/* 590A8 800688A8 FFFF0224 */   addiu     $v0, $zero, -0x1
+.Lstrcmp_30:
+/* 590AC 800688AC F9FFC010 */  beqz       $a2, .Lstrcmp_18
+/* 590B0 800688B0 01008424 */   addiu     $a0, $a0, 0x1
+.Lstrcmp_38:
+/* 590B4 800688B4 00008690 */  lbu        $a2, 0x0($a0)
+/* 590B8 800688B8 0000A390 */  lbu        $v1, 0x0($a1)
+/* 590BC 800688BC FF00C230 */  andi       $v0, $a2, 0xFF
+/* 590C0 800688C0 FAFF4310 */  beq        $v0, $v1, .Lstrcmp_30
+/* 590C4 800688C4 0100A524 */   addiu     $a1, $a1, 0x1
+/* 590C8 800688C8 00008390 */  lbu        $v1, 0x0($a0)
+/* 590CC 800688CC FFFFA290 */  lbu        $v0, -0x1($a1)
+/* 590D0 800688D0 00000000 */  nop
+/* 590D4 800688D4 23106200 */  subu       $v0, $v1, $v0
+.Lstrcmp_5C:
+/* 590D8 800688D8 0800E003 */  jr         $ra
+/* 590DC 800688DC 00000000 */   nop
+.size strcmp, . - strcmp
+
+glabel strncmp
+/* 52DB4 800625B4 03008010 */  beqz       $a0, .Lstrncmp_10
+/* 52DB8 800625B8 00000000 */   nop
+/* 52DBC 800625BC 0700A014 */  bnez       $a1, .Lstrncmp_28
+/* 52DC0 800625C0 00000000 */   nop
+.Lstrncmp_10:
+/* 52DC4 800625C4 18008510 */  beq        $a0, $a1, .Lstrncmp_74
+/* 52DC8 800625C8 00000000 */   nop
+/* 52DCC 800625CC 17008014 */  bnez       $a0, .Lstrncmp_78
+/* 52DD0 800625D0 01000224 */   addiu     $v0, $zero, 0x1
+/* 52DD4 800625D4 8B890108 */  j          .Lstrncmp_78
+/* 52DD8 800625D8 FFFF0224 */   addiu     $v0, $zero, -0x1
+.Lstrncmp_28:
+/* 52DDC 800625DC FFFFC624 */  addiu      $a2, $a2, -0x1
+/* 52DE0 800625E0 1200C004 */  bltz       $a2, .Lstrncmp_78
+/* 52DE4 800625E4 21100000 */   addu      $v0, $zero, $zero
+.Lstrncmp_34:
+/* 52DE8 800625E8 00008390 */  lbu        $v1, 0x0($a0)
+/* 52DEC 800625EC 0000A290 */  lbu        $v0, 0x0($a1)
+/* 52DF0 800625F0 00000000 */  nop
+/* 52DF4 800625F4 06006214 */  bne        $v1, $v0, .Lstrncmp_5C
+/* 52DF8 800625F8 0100A524 */   addiu     $a1, $a1, 0x1
+/* 52DFC 800625FC 0A006010 */  beqz       $v1, .Lstrncmp_74
+/* 52E00 80062600 01008424 */   addiu     $a0, $a0, 0x1
+/* 52E04 80062604 FFFFC624 */  addiu      $a2, $a2, -0x1
+/* 52E08 80062608 F7FFC104 */  bgez       $a2, .Lstrncmp_34
+/* 52E0C 8006260C 00000000 */   nop
+.Lstrncmp_5C:
+/* 52E10 80062610 0500C004 */  bltz       $a2, .Lstrncmp_74
+/* 52E14 80062614 00000000 */   nop
+/* 52E18 80062618 00008390 */  lbu        $v1, 0x0($a0)
+/* 52E1C 8006261C FFFFA290 */  lbu        $v0, -0x1($a1)
+/* 52E20 80062620 8B890108 */  j          .Lstrncmp_78
+/* 52E24 80062624 23106200 */   subu      $v0, $v1, $v0
+.Lstrncmp_74:
+/* 52E28 80062628 21100000 */  addu       $v0, $zero, $zero
+.Lstrncmp_78:
+/* 52E2C 8006262C 0800E003 */  jr         $ra
+/* 52E30 80062630 00000000 */   nop
+.size strncmp, . - strncmp
+.endif
+
 glabel D_800659F0
 /* 561F0 800659F0 D8FFBD27 */  addiu      $sp, $sp, -0x28
 /* 561F4 800659F4 2000B0AF */  sw         $s0, 0x20($sp)
@@ -12266,6 +13076,9 @@ glabel CdRead
 /* 56964 80066164 2A100200 */  slt        $v0, $zero, $v0
 /* 56968 80066168 0800E003 */  jr         $ra
 /* 5696C 8006616C 1800BD27 */   addiu     $sp, $sp, 0x18
+.size CdRead, . - CdRead
+
+glabel CdReadSync
 /* 56970 80066170 D8FFBD27 */  addiu      $sp, $sp, -0x28
 /* 56974 80066174 1800B2AF */  sw         $s2, 0x18($sp)
 /* 56978 80066178 21908000 */  addu       $s2, $a0, $zero
@@ -12322,7 +13135,7 @@ glabel CdRead
 /* 56A30 80066230 2800BD27 */  addiu      $sp, $sp, 0x28
 /* 56A34 80066234 0800E003 */  jr         $ra
 /* 56A38 80066238 00000000 */   nop
-.size CdRead, . - CdRead
+.size CdReadSync, . - CdReadSync
 
 glabel CdReadCallback
 /* 56A3C 8006623C 0780023C */  lui        $v0, %hi(D_80075144)
@@ -12340,6 +13153,7 @@ glabel func_80066254
 /* 56A68 80066268 00000000 */   nop
 .size CdReadCallback, . - CdReadCallback
 
+.if GAME_VER == VER_NTSC_U
 glabel MemCardInit
 /* 56A6C 8006626C E8FFBD27 */  addiu      $sp, $sp, -0x18
 /* 56A70 80066270 1000BFAF */  sw         $ra, 0x10($sp)
@@ -14830,7 +15644,7 @@ glabel func_80068524
 /* 58DC4 800685C4 06008010 */  beqz       $a0, .L800685E0
 /* 58DC8 800685C8 00000000 */   nop
 /* 58DCC 800685CC 0780053C */  lui        $a1, %hi(D_80075BB0)
-/* 58DD0 800685D0 1FA2010C */  jal        func_8006887C
+/* 58DD0 800685D0 1FA2010C */  jal        strcmp
 /* 58DD4 800685D4 B05BA524 */   addiu     $a1, $a1, %lo(D_80075BB0)
 /* 58DD8 800685D8 0A004010 */  beqz       $v0, .L80068604
 /* 58DDC 800685DC 00000000 */   nop
@@ -14879,7 +15693,7 @@ glabel func_80068524
 /* 58E6C 8006866C 06008010 */  beqz       $a0, .L80068688
 /* 58E70 80068670 00000000 */   nop
 /* 58E74 80068674 0780053C */  lui        $a1, %hi(D_80075BB0)
-/* 58E78 80068678 1FA2010C */  jal        func_8006887C
+/* 58E78 80068678 1FA2010C */  jal        strcmp
 /* 58E7C 8006867C B05BA524 */   addiu     $a1, $a1, %lo(D_80075BB0)
 /* 58E80 80068680 E5FF4010 */  beqz       $v0, .L80068618
 /* 58E84 80068684 00000000 */   nop
@@ -14942,7 +15756,7 @@ glabel D_800686C0
 /* 58F4C 8006874C 08008010 */  beqz       $a0, .L80068770
 /* 58F50 80068750 00000000 */   nop
 /* 58F54 80068754 0780053C */  lui        $a1, %hi(D_80075BB0)
-/* 58F58 80068758 1FA2010C */  jal        func_8006887C
+/* 58F58 80068758 1FA2010C */  jal        strcmp
 /* 58F5C 8006875C B05BA524 */   addiu     $a1, $a1, %lo(D_80075BB0)
 /* 58F60 80068760 03004014 */  bnez       $v0, .L80068770
 /* 58F64 80068764 00000000 */   nop
@@ -15025,38 +15839,39 @@ glabel func_800687D4
 /* 59070 80068870 2000BD27 */  addiu      $sp, $sp, 0x20
 /* 59074 80068874 0800E003 */  jr         $ra
 /* 59078 80068878 00000000 */   nop
-glabel func_8006887C
-/* 5907C 8006887C 03008010 */  beqz       $a0, .L8006888C
+glabel strcmp
+/* 5907C 8006887C 03008010 */  beqz       $a0, .Lstrcmp_10
 /* 59080 80068880 00000000 */   nop
-/* 59084 80068884 0B00A014 */  bnez       $a1, .L800688B4
+/* 59084 80068884 0B00A014 */  bnez       $a1, .Lstrcmp_38
 /* 59088 80068888 00000000 */   nop
-.L8006888C:
-/* 5908C 8006888C 03008514 */  bne        $a0, $a1, .L8006889C
+.Lstrcmp_10:
+/* 5908C 8006888C 03008514 */  bne        $a0, $a1, .Lstrcmp_20
 /* 59090 80068890 00000000 */   nop
-.L80068894:
-/* 59094 80068894 36A20108 */  j          .L800688D8
+.Lstrcmp_18:
+/* 59094 80068894 36A20108 */  j          .Lstrcmp_5C
 /* 59098 80068898 21100000 */   addu      $v0, $zero, $zero
-.L8006889C:
-/* 5909C 8006889C 0E008014 */  bnez       $a0, .L800688D8
+.Lstrcmp_20:
+/* 5909C 8006889C 0E008014 */  bnez       $a0, .Lstrcmp_5C
 /* 590A0 800688A0 01000224 */   addiu     $v0, $zero, 0x1
-/* 590A4 800688A4 36A20108 */  j          .L800688D8
+/* 590A4 800688A4 36A20108 */  j          .Lstrcmp_5C
 /* 590A8 800688A8 FFFF0224 */   addiu     $v0, $zero, -0x1
-.L800688AC:
-/* 590AC 800688AC F9FFC010 */  beqz       $a2, .L80068894
+.Lstrcmp_30:
+/* 590AC 800688AC F9FFC010 */  beqz       $a2, .Lstrcmp_18
 /* 590B0 800688B0 01008424 */   addiu     $a0, $a0, 0x1
-.L800688B4:
+.Lstrcmp_38:
 /* 590B4 800688B4 00008690 */  lbu        $a2, 0x0($a0)
 /* 590B8 800688B8 0000A390 */  lbu        $v1, 0x0($a1)
 /* 590BC 800688BC FF00C230 */  andi       $v0, $a2, 0xFF
-/* 590C0 800688C0 FAFF4310 */  beq        $v0, $v1, .L800688AC
+/* 590C0 800688C0 FAFF4310 */  beq        $v0, $v1, .Lstrcmp_30
 /* 590C4 800688C4 0100A524 */   addiu     $a1, $a1, 0x1
 /* 590C8 800688C8 00008390 */  lbu        $v1, 0x0($a0)
 /* 590CC 800688CC FFFFA290 */  lbu        $v0, -0x1($a1)
 /* 590D0 800688D0 00000000 */  nop
 /* 590D4 800688D4 23106200 */  subu       $v0, $v1, $v0
-.L800688D8:
+.Lstrcmp_5C:
 /* 590D8 800688D8 0800E003 */  jr         $ra
 /* 590DC 800688DC 00000000 */   nop
+.size strcmp, . - strcmp
 glabel func_800688E0
 /* 590E0 800688E0 A0000A24 */  addiu      $t2, $zero, 0xA0
 /* 590E4 800688E4 08004001 */  jr         $t2
@@ -15583,6 +16398,19 @@ glabel func_80069030
 /* 5985C 8006905C 00000000 */   nop
 .size MemCardSync, . - MemCardSync
 
+.endif
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+glabel PadChkVsync
+                               addiu      $sp, $sp, -0x18
+sw $ra, 0x10($sp)
+                               jal        func_80069808
+                                nop
+lw $ra, 0x10($sp)
+                               addiu      $sp, $sp, 0x18
+                               jr         $ra
+                                nop
+.size PadChkVsync, . - PadChkVsync
+.endif
 glabel PadStartCom
 /* 59860 80069060 E8FFBD27 */  addiu      $sp, $sp, -0x18
 /* 59864 80069064 1000BFAF */  sw         $ra, 0x10($sp)
@@ -15755,6 +16583,8 @@ glabel PadInfoMode
 /* 59A98 80069298 1000B08F */  lw         $s0, 0x10($sp)
 /* 59A9C 8006929C 0800E003 */  jr         $ra
 /* 59AA0 800692A0 2000BD27 */   addiu     $sp, $sp, 0x20
+.size PadInfoMode, . - PadInfoMode
+glabel PadInfoAct
 /* 59AA4 800692A4 0780023C */  lui        $v0, %hi(D_800751D0)
 /* 59AA8 800692A8 D051428C */  lw         $v0, %lo(D_800751D0)($v0)
 /* 59AAC 800692AC E0FFBD27 */  addiu      $sp, $sp, -0x20
@@ -15816,6 +16646,8 @@ jlabel .L80069354
 /* 59B6C 8006936C 1000B08F */  lw         $s0, 0x10($sp)
 /* 59B70 80069370 0800E003 */  jr         $ra
 /* 59B74 80069374 2000BD27 */   addiu     $sp, $sp, 0x20
+.size PadInfoAct, . - PadInfoAct
+glabel PadInfoComb
 /* 59B78 80069378 0780023C */  lui        $v0, %hi(D_800751D0)
 /* 59B7C 8006937C D051428C */  lw         $v0, %lo(D_800751D0)($v0)
 /* 59B80 80069380 E0FFBD27 */  addiu      $sp, $sp, -0x20
@@ -15862,8 +16694,7 @@ jlabel .L80069354
 /* 59C14 80069414 1000B08F */  lw         $s0, 0x10($sp)
 /* 59C18 80069418 0800E003 */  jr         $ra
 /* 59C1C 8006941C 2000BD27 */   addiu     $sp, $sp, 0x20
-.size PadInfoMode, . - PadInfoMode
-
+.size PadInfoComb, . - PadInfoComb
 glabel PadSetActAlign
 /* 59C20 80069420 0780023C */  lui        $v0, %hi(D_800751D0)
 /* 59C24 80069424 D051428C */  lw         $v0, %lo(D_800751D0)($v0)
@@ -16750,6 +17581,18 @@ glabel func_8006A0A4
 /* 5A8C4 8006A0C4 0800E003 */  jr         $ra
 /* 5A8C8 8006A0C8 00000000 */   nop
 /* 5A8CC 8006A0CC 00000000 */  nop
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+glabel func_80068D50
+                               addiu      $t2, $zero, 0xC0
+                               jr         $t2
+                                addiu      $t1, $zero, 2
+                               nop
+glabel func_80068D60
+                               addiu      $t2, $zero, 0xC0
+                               jr         $t2
+                                addiu      $t1, $zero, 3
+                               nop
+.endif
 glabel func_8006A0D0
 /* 5A8D0 8006A0D0 280085AC */  sw         $a1, 0x28($a0)
 /* 5A8D4 8006A0D4 0800E003 */  jr         $ra

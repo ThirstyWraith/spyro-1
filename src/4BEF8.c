@@ -18,9 +18,15 @@ void AllocateBuffers(int pReducedSpace) {
   g_Buffers.m_HudOTStart = (char *)g_Buffers.m_SharedAnimations - 0x6008;
 
   if (pReducedSpace) {
+#if GAME_VER == VER_NTSC_U
     g_Buffers.m_HigherPolyBuffer = (char *)g_Buffers.m_HudOTStart - 0x13000;
     g_Buffers.m_LowerPolyBuffer =
         (char *)g_Buffers.m_HigherPolyBuffer - 0x13000;
+#else
+    g_Buffers.m_HigherPolyBuffer = (char *)g_Buffers.m_HudOTStart - 0x14000;
+    g_Buffers.m_LowerPolyBuffer =
+        (char *)g_Buffers.m_HigherPolyBuffer - 0x14000;
+#endif
   } else {
     g_Buffers.m_HigherPolyBuffer = (char *)g_Buffers.m_HudOTStart - 0x1c000;
     g_Buffers.m_LowerPolyBuffer =

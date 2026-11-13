@@ -1,3 +1,4 @@
+.include "render_constants.inc"
 .include "macro.inc"
 .include "c2regs.inc"
 
@@ -135,8 +136,8 @@ glabel func_8004EBA8
 /* 3F578 8004ED78 08005222 */  addi       $s2, $s2, 0x8 /* handwritten instruction */
 /* 3F57C 8004ED7C 10006C8E */  lw         $t4, 0x10($s3)
 /* 3F580 8004ED80 801F173C */  lui        $s7, (0x1F800004 >> 16)
-/* 3F584 8004ED84 01000D3C */  lui        $t5, (0x10000 >> 16)
-/* 3F588 8004ED88 00010E3C */  lui        $t6, (0x1000000 >> 16)
+/* 3F584 8004ED84 01000D3C */  lui        $t5, CLIP_Y_MIN
+/* 3F588 8004ED88 00010E3C */  lui        $t6, CLIP_Y_MAX
 /* 3F58C 8004ED8C 00020F3C */  lui        $t7, (0x2000000 >> 16)
 /* 3F590 8004ED90 FFFF1020 */  addi       $s0, $zero, -0x1 /* handwritten instruction */
 /* 3F594 8004ED94 0000218E */  lw         $at, 0x0($s1)
@@ -417,8 +418,8 @@ glabel func_8004F000
 /* 3F994 8004F194 08005222 */  addi       $s2, $s2, 0x8 /* handwritten instruction */
 /* 3F998 8004F198 10006C8E */  lw         $t4, 0x10($s3)
 /* 3F99C 8004F19C 801F173C */  lui        $s7, (0x1F800004 >> 16)
-/* 3F9A0 8004F1A0 01000D3C */  lui        $t5, (0x10000 >> 16)
-/* 3F9A4 8004F1A4 00010E3C */  lui        $t6, (0x1000000 >> 16)
+/* 3F9A0 8004F1A0 01000D3C */  lui        $t5, CLIP_Y_MIN
+/* 3F9A4 8004F1A4 00010E3C */  lui        $t6, CLIP_Y_MAX
 /* 3F9A8 8004F1A8 00020F3C */  lui        $t7, (0x2000000 >> 16)
 /* 3F9AC 8004F1AC FFFF1020 */  addi       $s0, $zero, -0x1 /* handwritten instruction */
 /* 3F9B0 8004F1B0 0780013C */  lui        $at, %hi(D_800757D4)

@@ -405,11 +405,22 @@ void NAME_OVERLAY_FUNCTION(BalloonistUpdate)(void) {
   }
 
   case 2: {
+#if GAME_VER == VER_NTSC_U
+    const int jumpDuration = 48;
+    const int jumpAngleStep = 32;
+    const int cameraDuration = 102;
+#else
+    const int jumpDuration = 40;
+    const int jumpAngleStep = 38;
+    const int cameraDuration = 86;
+#endif
     Vector3D vec;
     Vector3D16 shortvec;
     int lerpProgress, currentAngle, currentDist;
+#if GAME_VER == VER_NTSC_U
     if (g_Balloonist.unk_0x04 < 102) {
-      lerpProgress = Sin((g_Balloonist.unk_0x04 * 2048) / 102 - 1024) + 4096;
+#endif
+      lerpProgress = Sin((g_Balloonist.unk_0x04 * 2048) / cameraDuration - 1024) + 4096;
       if (g_Balloonist.unk_0x04 == g_DeltaTime) {
         g_Balloonist.m_BalloonMoby->m_SectorIndex = -1;
         g_Balloonist.unk_0x38 = Atan2(
@@ -440,24 +451,24 @@ void NAME_OVERLAY_FUNCTION(BalloonistUpdate)(void) {
         g_Spyro.m_BodyFrameProgress = 0;
         g_Spyro.m_BodyAnimationSpeed = 7;
       }
-      if (g_Balloonist.unk_0x04 < 48) {
+      if (g_Balloonist.unk_0x04 < jumpDuration) {
         g_Spyro.m_Position.x =
             g_Balloonist.unk_0x18.x +
             ((g_Balloonist.unk_0x2C.x - g_Balloonist.unk_0x18.x) *
              g_Balloonist.unk_0x04) /
-                48;
+                jumpDuration;
         g_Spyro.m_Position.y =
             g_Balloonist.unk_0x18.y +
             ((g_Balloonist.unk_0x2C.y - g_Balloonist.unk_0x18.y) *
              g_Balloonist.unk_0x04) /
-                48;
+                jumpDuration;
         g_Spyro.m_Position.z = g_Balloonist.unk_0x18.z +
-                               (Sin(g_Balloonist.unk_0x04 << 5) * 10) / 36;
+                               (Sin(g_Balloonist.unk_0x04 * jumpAngleStep) * 10) / 36;
         g_Spyro.m_FloorHeight = ColFindFloor(&g_Spyro.m_Position, 0x10000);
         RotVec8ToMatrix(&g_Spyro.m_BodyRotation, &g_Spyro.m_RotationMatrix, 0);
         func_80049FAC(1);
       } else {
-        if (g_Balloonist.unk_0x04 - g_DeltaTime < 48) {
+        if (g_Balloonist.unk_0x04 - g_DeltaTime < jumpDuration) {
           g_Balloonist.unk_0x18.x = g_Balloonist.unk_0x2C.x;
           g_Balloonist.unk_0x18.y = g_Balloonist.unk_0x2C.y;
           g_Balloonist.unk_0x18.z = g_Balloonist.unk_0x18.z + 805;
@@ -468,20 +479,20 @@ void NAME_OVERLAY_FUNCTION(BalloonistUpdate)(void) {
           g_Spyro.m_BodyFrameProgress = 0;
           g_Spyro.m_BodyAnimationSpeed = 4;
         }
-        if (53 < g_Balloonist.unk_0x04 - g_DeltaTime) {
+        if (jumpDuration + 5 < g_Balloonist.unk_0x04 - g_DeltaTime) {
           g_Spyro.m_BodyAnimationSpeed = 7;
           g_Spyro.m_Position.x =
               g_Balloonist.unk_0x18.x +
               ((g_Balloonist.unk_0x2C.x - g_Balloonist.unk_0x18.x) *
-               (g_Balloonist.unk_0x04 - 54)) /
-                  48;
+               (g_Balloonist.unk_0x04 - (jumpDuration + 6))) /
+                  jumpDuration;
           g_Spyro.m_Position.y =
               g_Balloonist.unk_0x18.y +
               ((g_Balloonist.unk_0x2C.y - g_Balloonist.unk_0x18.y) *
-               (g_Balloonist.unk_0x04 - 54)) /
-                  48;
+               (g_Balloonist.unk_0x04 - (jumpDuration + 6))) /
+                  jumpDuration;
           g_Spyro.m_Position.z = g_Balloonist.unk_0x18.z +
-                                 (Sin((g_Balloonist.unk_0x04 - 54) * 32) >> 2);
+                                 (Sin((g_Balloonist.unk_0x04 - (jumpDuration + 6)) * jumpAngleStep) >> 2);
         }
       }
       if ((g_Balloonist.unk_0x50 - g_Balloonist.unk_0x38 & 0xfff) <= 2048) {
@@ -531,7 +542,11 @@ void NAME_OVERLAY_FUNCTION(BalloonistUpdate)(void) {
           ((g_Balloonist.unk_0x5C[1] - g_Balloonist.unk_0x5C[0]) *
                lerpProgress >>
            13);
+#if GAME_VER == VER_NTSC_U
     } else {
+#else
+    if (g_Balloonist.unk_0x04 >= 84) {
+#endif
       g_Balloonist.m_State = 3;
       g_Balloonist.unk_0x04 = 0;
     }
@@ -709,21 +724,36 @@ void NAME_OVERLAY_FUNCTION(BalloonistUpdate)(void) {
   }
 
   case 7: {
+#if GAME_VER == VER_NTSC_U
+    const int jumpDuration = 64;
+    const int jumpAngleStep = 24;
+#else
+    const int jumpDuration = 54;
+    const int jumpAngleStep = 28;
+#endif
     int pad[2];
-    if (g_Balloonist.unk_0x04 < 64) {
+    if (g_Balloonist.unk_0x04 < jumpDuration) {
       g_Spyro.m_Position.x =
           g_Balloonist.unk_0x18.x +
-          ((g_Balloonist.unk_0x2C.x - g_Balloonist.unk_0x18.x) *
-               g_Balloonist.unk_0x04 >>
-           6);
+          (((g_Balloonist.unk_0x2C.x - g_Balloonist.unk_0x18.x) *
+               g_Balloonist.unk_0x04)
+#if GAME_VER == VER_NTSC_U
+              >> 6);
+#else
+              / jumpDuration);
+#endif
       g_Spyro.m_Position.y =
           g_Balloonist.unk_0x18.y +
-          ((g_Balloonist.unk_0x2C.y - g_Balloonist.unk_0x18.y) *
-               g_Balloonist.unk_0x04 >>
-           6);
+          (((g_Balloonist.unk_0x2C.y - g_Balloonist.unk_0x18.y) *
+               g_Balloonist.unk_0x04)
+#if GAME_VER == VER_NTSC_U
+              >> 6);
+#else
+              / jumpDuration);
+#endif
       g_Spyro.m_Position.z =
           g_Balloonist.unk_0x2C.z +
-          (Sin(g_Balloonist.unk_0x04 * 24 + 512) *
+          (Sin(g_Balloonist.unk_0x04 * jumpAngleStep + 512) *
            (g_Balloonist.unk_0x18.z - g_Balloonist.unk_0x2C.z)) /
               2896;
       g_Spyro.m_FloorHeight = ColFindFloor(&g_Spyro.m_Position, 0x10000);
@@ -759,6 +789,9 @@ void NAME_OVERLAY_FUNCTION(BalloonistUpdate)(void) {
 }
 
 void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  int dialogue;
+#endif
   if (g_Balloonist.m_State <= 3) {
     if (g_Balloonist.m_State <= 1) {
       Vector3D vec1;
@@ -768,8 +801,13 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
       int i;
 
       hudmobyptr = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
       sprintf(buffer, "%s THE BALLOONIST",
               g_BalloonistNames[g_LevelId / 10 - 1]);
+#else
+      sprintf(buffer, "%s %s", g_BalloonistNames[g_LevelId / 10 - 1],
+              StringTheBalloonist);
+#endif
       vec1.x = 0x108 - strlen(buffer) * 8;
       vec1.y = 0xcc;
       vec1.z = 0x1100;
@@ -784,13 +822,19 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
         hudmobyptr--;
       }
     }
+#if GAME_VER == VER_NTSC_U
     if (g_Balloonist.m_State == 1) {
+#else
+    dialogue = g_Balloonist.m_State;
+    if (dialogue == 1) {
+#endif
       if (g_Balloonist.m_DialogueId <= 29 || g_Balloonist.m_DialogueId >= 33) {
         Vector3D vec1;
         Vector3D vec2;
         Moby *hudmobyptr;
         int i;
 
+#if GAME_VER == VER_NTSC_U
         func_8001860C(0x48, 0x1b8, 0x1c, 0x68);
         hudmobyptr = g_HudMobys;
         vec1.y = 0x2c;
@@ -805,6 +849,40 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
           func_800181AC(g_BalloonistDialogue[i], &vec1, &vec2, 0x12, 0xb);
           vec1.y += 0x12;
         }
+#else
+        int lineWidths[3];
+        int maxWidth;
+
+        if (g_Balloonist.m_DialogueId < 30) {
+          dialogue = g_Balloonist.m_DialogueId;
+        } else {
+          dialogue = g_Balloonist.m_DialogueId - 3;
+        }
+        dialogue *= 3;
+        i = 0;
+        maxWidth = 0;
+        vec1.y = 39;
+        vec1.z = 0x1400;
+        vec2.x = 15;
+        vec2.y = 1;
+        vec1.x = 0;
+        vec2.z = 0x1600;
+        for (; i < 3; i++) {
+          hudmobyptr = g_HudMobys;
+          func_800181AC(g_BalloonistDialogue[dialogue + i], &vec1, &vec2, 16, 11);
+          g_HudMobys = hudmobyptr;
+          lineWidths[i] = vec1.x;
+          if (maxWidth < lineWidths[i]) {
+            maxWidth = lineWidths[i];
+          }
+          vec1.x = 0;
+        }
+        for (i = 0; i < 3; i++) {
+          vec1.x = 264 - lineWidths[i] / 2;
+          func_800181AC(g_BalloonistDialogue[dialogue + i], &vec1, &vec2, 16, 11);
+          vec1.y += 18;
+        }
+#endif
         if (g_Balloonist.unk_0x04 < 80) {
           if ((int)g_HudMobys <= (int)(hudmobyptr - g_Balloonist.unk_0x04))
             g_HudMobys = hudmobyptr - g_Balloonist.unk_0x04;
@@ -815,9 +893,17 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
               COSINE_8((g_Balloonist.unk_0x04 * 4 + (i * 12) & 0xff)) >> 8;
           hudmobyptr--;
         }
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+        func_8001860C(248 - maxWidth / 2, 264 + maxWidth / 2, 24, 98);
+#endif
         if (g_Balloonist.unk_0x04 > 0x4f) {
+#if GAME_VER == VER_NTSC_U
           vec1.x = 0x19c;
           vec1.y = 0x60;
+#else
+          vec1.x = 248 + maxWidth / 2;
+          vec1.y = 90;
+#endif
           vec1.z = 0x1100;
           func_80018534(&vec1, g_Balloonist.unk_0x04, 0);
         }
@@ -836,6 +922,7 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
         vec2.y = 0x1;
         vec1.y = 0x24;
 
+#if GAME_VER == VER_NTSC_U
         if (g_Balloonist.m_DialogueTopStr == 0) {
           func_800181AC("HOP ON, SPYRO!", &vec1, &vec2, 0x10, 0xb);
         } else if (g_Balloonist.m_DialogueTopStr == 1) {
@@ -843,10 +930,25 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
         } else {
           func_800181AC("WHERE TO, SPYRO?", &vec1, &vec2, 0x10, 0xb);
         }
+#else
+        if (g_Balloonist.m_DialogueTopStr == 0) {
+          func_800181AC(StringWhereToSpyro, &vec1, &vec2, 0x10, 0xb);
+        } else {
+          func_800181AC(StringNeedALift, &vec1, &vec2, 0x10, 0xb);
+        }
+#endif
         vec1.x = 0x110;
+#if GAME_VER == VER_NTSC_U
         vec1.y += 0x14;
+#else
+        vec1.y += 0x15;
+#endif
         hudmobyptr = g_HudMobys - 1;
+#if GAME_VER == VER_NTSC_U
         func_800181AC("STAY HERE", &vec1, &vec2, 0x10, 0xb);
+#else
+        func_800181AC(StringStayHere, &vec1, &vec2, 0x10, 0xb);
+#endif
         vec1.y += 0xf;
         if (g_Balloonist.unk_0x08 == 0) {
           for (i = 0; g_HudMobys <= hudmobyptr; i++) {
@@ -873,8 +975,13 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
             someflag++;
           }
         }
+#if GAME_VER == VER_NTSC_U
         func_8001860C(0xe0, 0x1d8, 0x19, someflag * 0xf + 0x33);
         func_8001844C(0xf0, 0x2e, 0x1a0, 0x2e);
+#else
+        func_8001860C(0xe0, 0x1e4, 0x18, someflag * 0xf + 0x33);
+        func_8001844C(0xf0, 0x2d, 0x1a0, 0x2d);
+#endif
         vec1.x = 0xf4;
         vec1.y = g_Balloonist.unk_0x08 * 0xf + 0x36;
         vec1.z = 0x1100;
@@ -887,27 +994,58 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
         Moby *hudmobyptr;
         int i;
 
+#if GAME_VER == VER_NTSC_U
+        const int textScale = 18;
         func_8001860C(0x48, 0x1b8, 0x1c, 0x66);
         func_8001844C(100, 0x37, 0x184, 0x37);
+#else
+        const int textScale = 16;
+        func_8001860C(0x48, 0x1b8, 0x18, 0x62);
+        func_8001844C(100, 0x33, 0x184, 0x33);
+#endif
         vec1.x = 0x60;
+#if GAME_VER == VER_NTSC_U
         vec1.y = g_Balloonist.unk_0x08 * 0x13 + 0x43;
+#else
+        vec1.y = g_Balloonist.unk_0x08 * 0x13 + 0x3F;
+#endif
         vec1.z = 0x1100;
         func_80018534(&vec1, g_Balloonist.unk_0x04, 0);
+#if GAME_VER == VER_NTSC_U
         vec2.x = 0x10;
         vec2.z = 0x1400;
         vec1.y = 0x2c;
+#else
+        vec2.x = 15;
+        vec2.z = 0x1600;
+        vec1.z = 0x1400;
+        vec1.y = 39;
+#endif
         vec2.y = 1;
+#if GAME_VER == VER_NTSC_U
         vec1.z = 0x1100;
+#endif
         vec1.x = 0x60;
 
+#if GAME_VER == VER_NTSC_U
         if (g_Balloonist.m_DialogueId == 31)
           func_800181AC("ARE YOU READY TO GO?", &vec1, &vec2, 0x12, 0xb);
         else
           func_800181AC("WOULD YOU LIKE TO GO?", &vec1, &vec2, 0x12, 0xb);
+#else
+        if (g_Balloonist.m_DialogueId == 31)
+          func_800181AC(StringAreYouReadyToGo, &vec1, &vec2, textScale, 0xb);
+        else
+          func_800181AC(StringWouldYouLikeToGo, &vec1, &vec2, textScale, 0xb);
+#endif
         vec1.x = 0x80;
         vec1.y += 0x19;
         hudmobyptr = g_HudMobys - 1;
-        func_800181AC("STAY HERE", &vec1, &vec2, 0x12, 0xb);
+#if GAME_VER == VER_NTSC_U
+        func_800181AC("STAY HERE", &vec1, &vec2, textScale, 0xb);
+#else
+        func_800181AC(StringStayHere, &vec1, &vec2, textScale, 0xb);
+#endif
         vec1.y += 0x13;
         if (g_Balloonist.unk_0x08 == 0) {
           for (i = 0; g_HudMobys <= hudmobyptr; i++) {
@@ -919,14 +1057,23 @@ void NAME_OVERLAY_FUNCTION(BalloonistDraw)(void) {
         vec1.x = 0x80;
         hudmobyptr = g_HudMobys - 1;
         if (g_Balloonist.m_DialogueId == 31) {
+#if GAME_VER == VER_NTSC_U
           sprintf(buffer, "GO TO %s", g_HomeworldNames[g_LevelId / 10]);
+#else
+          sprintf(buffer, "%s%s", StringGoTo, g_HomeworldNames[g_LevelId / 10]);
+#endif
         } else {
+#if GAME_VER == VER_NTSC_U
           sprintf(buffer, "GO TO %s",
                   g_HomeworldNames[7 + (g_NextLevelId / 10 - 1) * 6 +
                                    g_NextLevelId % 10]);
+#else
+          sprintf(buffer, "%s%s", StringGoTo,
+                  g_LevelNames[(g_NextLevelId / 10 - 1) * 6 + g_NextLevelId % 10]);
+#endif
         }
 
-        func_800181AC(buffer, &vec1, &vec2, 18, 11);
+        func_800181AC(buffer, &vec1, &vec2, textScale, 11);
 
         if (g_Balloonist.unk_0x08 == 1) {
           for (i = 0; g_HudMobys <= hudmobyptr; i++) {

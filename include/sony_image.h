@@ -27,7 +27,11 @@ extern struct {
   u_int m_WorldNearQueued[256];
   u_int m_WorldFarQueued[256];
   Moby *m_ShadedMobys[256];
+#if GAME_VER == VER_NTSC_U
   char unk_0x2800[2464];
+#else
+  char unk_0x2800[2276];
+#endif
 } g_SonyImage;
 
 #endif

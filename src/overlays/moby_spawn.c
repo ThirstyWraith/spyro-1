@@ -1333,6 +1333,7 @@ Moby *NAME_OVERLAY_FUNCTION(SpawnMoby)(int pClass, Moby *pParent) {
     break;
   }
 
+  case 365 ... 369:
   case 76:               // Apostrophe
   case 426 ... 451: {    // Text A-Z
     func_8003A720(moby); // Reset the Moby first

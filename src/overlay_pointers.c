@@ -33,6 +33,9 @@
     g_UpdateMoby = UpdateMoby_LEVEL_##pLevel;                                  \
     g_SpawnParticle = SpawnParticle_LEVEL_##pLevel;                            \
     g_UpdateParticle = UpdateParticle_LEVEL_##pLevel;                          \
+    if (GAME_VER >= VER_C3_DEMO_NTSC_U) {                                      \
+      g_FlightTextLen = FlightTextLen_LEVEL_##pLevel;                          \
+    }                                                                          \
     D_80075694 = Flight1_LEVEL_##pLevel;                                       \
     D_800757A8 = Flight2_LEVEL_##pLevel;                                       \
     g_FlightResultsUpdate = Flight3_LEVEL_##pLevel;                            \
@@ -42,6 +45,7 @@
 
 void SetOverlayPointers(void) {
   switch (g_LevelId) {
+#if GAME_VER == VER_NTSC_U
     // Test levels
     LEVEL_CASE_BALLOON(0);
     LEVEL_CASE(1);
@@ -102,6 +106,11 @@ void SetOverlayPointers(void) {
 
     // Another test level
     LEVEL_CASE(99);
+#else
+    LEVEL_CASE_BALLOON(10);
+    LEVEL_CASE_BALLOON(13);
+    LEVEL_CASE_FLIGHT(15);
+#endif
 
 #if 0
   default:

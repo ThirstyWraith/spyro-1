@@ -35,7 +35,7 @@ void CDLoadTime(void) {
   }
 }
 
-#if 0
+#if GAME_VER == VER_C3_DEMO_NTSC_U
 // Matches 80015fc8 of June with Printf
 // Matches 8001d4c8 of Foil without Printf
 int CDGetFileSector(char *pFileName) {

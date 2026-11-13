@@ -916,7 +916,13 @@ void UpdateSlopeFloorCollision(void) {
   // === FALLBACK VERTICAL CHECK ===
   // When airborne and not idle, try a simple vertical raycast
   // This catches cases where the rotated ray missed but floor exists
-  if (g_Spyro.m_AirTime != 0 && g_Spyro.m_FloorIdleTime == 0) {
+  if (
+    #if GAME_VER >= VER_C3_DEMO_NTSC_U
+    g_Spyro.m_State != 11 && g_Spyro.m_State != 2 &&
+    #endif
+    g_Spyro.m_AirTime != 0 && g_Spyro.m_FloorIdleTime == 0
+  ) {
+
     // Axis-aligned vertical ray (no rotation)
     vec1.z = -260;
     vec1.x = 0;
@@ -1196,6 +1202,9 @@ void SpyroSetState(int pNewState) {
     } else {
       D_800756B4 = 0;
     }
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    PlaySound(g_Spu.m_SoundTable->sound_0x42, (Moby *)&g_Spyro, 16, nullptr);
+#endif
     break;
 
   case 6:
@@ -1226,6 +1235,14 @@ void SpyroSetState(int pNewState) {
     g_Spyro.m_isGliding = 0;
     g_Spyro.unk_0x15c = 0;
     break;
+
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  case 8:
+    g_Spyro.m_walkingState = 0;
+    g_Spyro.unk_0x15c = 1;
+    PlaySound(g_Spu.m_SoundTable->sound_0x42, (Moby *)&g_Spyro, 16, nullptr);
+    break;
+#endif
 
   case 9:
   case 10:
@@ -1352,6 +1369,9 @@ void SpyroSetState(int pNewState) {
     if (D_800757D0 < 15) {
       D_800757D0 = 15;
     }
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    PlaySound(g_Spu.m_SoundTable->sound_0x43, (Moby *)&g_Spyro, 16, nullptr);
+#endif
     break;
   }
 
@@ -1691,10 +1711,12 @@ void SpyroSetState(int pNewState) {
     g_Spyro.unk_0x15c = 1;
     break;
 
+#if GAME_VER == VER_NTSC_U
   case 8:
     g_Spyro.m_walkingState = 0;
     g_Spyro.unk_0x15c = 1;
     break;
+#endif
 
   case 44: {
     int speed;
@@ -5591,8 +5613,13 @@ void func_80047B60(void) {
       CheckWallCollision();
     }
 
+#if GAME_VER == VER_NTSC_U
     VecCopy(&g_Spyro.m_Physics.m_Acceleration,
             &g_Spyro.m_Physics.m_TrueVelocity);
+#else
+    g_Spyro.m_Physics.m_Acceleration.x = g_Spyro.m_Physics.m_TrueVelocity.x;
+    g_Spyro.m_Physics.m_Acceleration.y = g_Spyro.m_Physics.m_TrueVelocity.y;
+#endif
     break;
 
   case 23:

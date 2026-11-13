@@ -175,8 +175,9 @@ void func_8002C714(int pEnteringFromGameplay) {
   if (pEnteringFromGameplay) {
     D_800758B8 = 0; // Pause menu text rotation ticks
   }
-
+#if GAME_VER == VER_NTSC_U
   CheatResetBuffer();
+#endif
 }
 
 /// @brief Unpauses from the inventory menu
@@ -240,7 +241,7 @@ void func_8002C91C(void){};
 /// @brief Rescue a dragon, increments the needed values and starts the cutscene
 void func_8002C924(Moby *pMoby) {
   RescuedDragonMobyProps *props = pMoby->m_Props;
-
+#if GAME_VER == VER_NTSC_U
   // For artisans, check if the Toasty conditions have been met
   if (g_LevelId == 10 && props->m_CutsceneId == 1) {
     if (((g_LevelVortexExitFlags[1] != 0) || (g_LevelVortexExitFlags[2] != 0) ||
@@ -273,7 +274,7 @@ void func_8002C924(Moby *pMoby) {
       props->m_NameIndex = 16;
     }
   }
-
+#endif
   g_Gamestate = GS_Dragon;
   g_ScreenBorderEnabled = 1;
   g_StateSwitch = 1;
@@ -386,6 +387,16 @@ void InitFairyCutscene(Moby *pMoby) {
   int zPos;
   int fairyAngle;
 
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  const int menu_offset_x = 1;
+  const int view_angle_offset = 0x28a;
+  const int view_distance = 0x4fb;
+#else
+  const int menu_offset_x = 0xB0;
+  const int view_angle_offset = 0x30b;
+  const int view_distance = 0x4c9;
+#endif
+
   pProps = pMoby->m_Props;
 
   g_Gamestate = GS_Fairy;
@@ -471,11 +482,11 @@ void InitFairyCutscene(Moby *pMoby) {
 
   g_FairyCutscene.m_CameraStartDistance = VecMagnitude(&vec, 0);
 
-  // Default menu to right side of screen (offset 0xB0)
-  g_FairyCutscene.m_MenuOffsetX = 0xB0;
+  // Default menu to right side of screen
+  g_FairyCutscene.m_MenuOffsetX = menu_offset_x;
 
   // View angle ~45 degrees from spawn direction
-  angle = (g_FairyCutscene.m_AngleToDragonPad + 0x30B) & 0xFFF;
+  angle = (g_FairyCutscene.m_AngleToDragonPad + view_angle_offset) & 0xFFF;
 
   g_FairyCutscene.m_CameraStartZ = g_Camera.m_Position.z;
   g_FairyCutscene.m_CameraViewAngle = angle;
@@ -484,11 +495,11 @@ void InitFairyCutscene(Moby *pMoby) {
   if (func_80017928(g_FairyCutscene.m_CameraStartAngle, angle) > 0x400) {
     g_FairyCutscene.m_MenuOffsetX = 0;
     g_FairyCutscene.m_CameraViewAngle =
-        (g_FairyCutscene.m_AngleToDragonPad - 0x30B) & 0xFFF;
+        (g_FairyCutscene.m_AngleToDragonPad - view_angle_offset) & 0xFFF;
   }
 
   // Final viewing position for save menu
-  g_FairyCutscene.m_CameraViewDistance = 0x4C9;
+  g_FairyCutscene.m_CameraViewDistance = view_distance;
   g_FairyCutscene.m_CameraViewZ = g_Spyro.m_Position.z + 0x56B;
 }
 
@@ -542,6 +553,7 @@ void func_8002D02C(void) {
   SetMusicState(g_CdMusic.m_CurrentTrack, 8);
 }
 
+#if GAME_VER == VER_NTSC_U
 /// @brief Start the titlescreen gamestate
 void func_8002D170(void) {
   g_Gamestate = GS_TitleScreen;
@@ -754,3 +766,4 @@ void EndCutscenePlayback(void) {
     g_StateSwitch = 1;
   }
 }
+#endif

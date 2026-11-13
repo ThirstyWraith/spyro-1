@@ -33,6 +33,49 @@
 
 extern unsigned int strlen(char *);
 
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+void ClearFramebuffers(void) {
+  RECT rc;
+  setRECT(&rc, 0, 0, 512, 240);
+  ClearImage(&rc, 0, 0, 0);
+  rc.y = 240;
+  ClearImage(&rc, 0, 0, 0);
+  DrawSync(0);
+}
+
+void FadeStartupImage(void *src, u_long *imageBuffer, int bfadeIn) {
+  RECT rc;
+  int i;
+  const int blend_start = 224;
+  const int blend_step = 32;
+  const int blend_step_count = 8;
+  const int rgb24_w = (512 / 2) * 3;
+  const int rgb24_h = 240;
+  const int image_size = 512 * 3 * 240;
+
+  Memset(imageBuffer, 0, image_size);
+
+  for (i = 0; i < blend_step_count; i++) {
+    if (bfadeIn) {
+      func_80017F24(src, imageBuffer, -blend_start + i * blend_step);
+    } else {
+      func_80017F24(src, imageBuffer, -i * blend_step - blend_step);
+    }
+
+    setRECT(&rc, 0, 0, rgb24_w, rgb24_h);
+
+    LoadImage(&rc, imageBuffer);
+    DrawSync(0);
+    VSync(0);
+    PutDispEnv(&g_DB[1].m_DispEnv);
+
+    if (bfadeIn && i == 0) {
+      SetDispMask(1);
+    }
+  }
+}
+#endif
+
 // HAS to be local to this file.
 D_80075950_t D_80075950;
 
@@ -40,6 +83,7 @@ extern char D_8006F304[1];             // "GAMEOVER"
 extern u_short g_GrayscalePalette[32]; // 32 colors
 
 /// @brief Create text Mobys, no capitalization
+#if GAME_VER == VER_NTSC_U
 Moby *func_80017FE4(char *pText, Vector3D *pPosition, int pSpaceWidth,
                     int pShadeIndex) {
   while (*pText != '\0') {
@@ -74,8 +118,10 @@ Moby *func_80017FE4(char *pText, Vector3D *pPosition, int pSpaceWidth,
   }
   return g_HudMobys;
 }
+#endif
 
 /// @brief Create text Mobys
+#if GAME_VER == VER_NTSC_U
 Moby *func_800181AC(char *pText, Vector3D *pPosition, Vector3D *pTextSpacing,
                     int pSpaceWidth, int pShadeIndex) {
   int isCapital;
@@ -135,6 +181,109 @@ Moby *func_800181AC(char *pText, Vector3D *pPosition, Vector3D *pTextSpacing,
   }
   return g_HudMobys;
 }
+#else
+// Used in C3 NTSC-U Demo
+Moby *func_800181AC(char *pText, Vector3D *pPosition, Vector3D *pTextSpacing,
+                    int pSpaceWidth, int pShadeIndex) {
+  int isCapital;
+  int wasCapital;
+
+  isCapital = 1;
+  wasCapital = 1;
+
+  while (*pText != '\0') {
+    if (*pText != ' ') {
+      g_HudMobys -= 1;
+      Memset(g_HudMobys, 0, sizeof(Moby));
+      VecCopy(&g_HudMobys->m_Position, pPosition);
+
+      if (*pText >= 'A' && *pText <= 'Z') {
+        g_HudMobys->m_Class = MOBYCLASS_LETTER_A + *pText - 'A';
+      } else if (*pText >= '0' && *pText <= '9') {
+        isCapital = 1;
+        g_HudMobys->m_Class = MOBYCLASS_NUMBER_0 + *pText - '0';
+      } else if (*pText >= 'a' && *pText <= 'f') {
+        if (wasCapital) {
+          pPosition->x -= pSpaceWidth;
+        } else {
+          pPosition->x -= pTextSpacing->x;
+        }
+
+        g_HudMobys->m_Position.x = pPosition->x;
+
+        if (*pText >= 'a' && *pText <= 'e') {
+          g_HudMobys->m_Class = *pText + 0x10C;
+        }
+
+        if (*pText == 'f') {
+          g_HudMobys->m_Class = 0x147;
+          g_HudMobys->m_Position.y -= pSpaceWidth / 3;
+        }
+        isCapital = wasCapital;
+
+      } else if (*pText == '/') {
+        isCapital = 1;
+        g_HudMobys->m_Class = 0x115;
+      } else if (*pText == '-') {
+        g_HudMobys->m_Class = 0x115;
+        g_HudMobys->m_Rotation.x = 0x29;
+        g_HudMobys->m_Position.z += 0xA00;
+        isCapital = 1;
+      } else if (*pText == '%') {
+        isCapital = 1;
+        g_HudMobys->m_Class = 0x110;
+      } else if (*pText == '^') {
+        isCapital = 1;
+        g_HudMobys->m_Class = 0x141;
+      } else if (*pText == '+') {
+        isCapital = 1;
+        g_HudMobys->m_Class = 0x13D;
+      } else if (*pText == '!') {
+        isCapital = 1;
+        g_HudMobys->m_Class = MOBYCLASS_EXCLAMATION_MARK;
+      } else if (*pText == '?') {
+        isCapital = 1;
+        g_HudMobys->m_Class = MOBYCLASS_QUESTION_MARK;
+      } else if (*pText == '.') {
+        g_HudMobys->m_Class = MOBYCLASS_PERIOD;
+      } else if (*pText == ',') {
+        g_HudMobys->m_Class = MOBYCLASS_LETTER_APOSTROPHE;
+      } else {
+        g_HudMobys->m_Class = MOBYCLASS_LETTER_APOSTROPHE;
+        g_HudMobys->m_Position.y -= (pSpaceWidth * 2) / 3;
+      }
+
+      g_HudMobys->m_DepthOffset = 0x7F;
+      g_HudMobys->m_SpecularMetalType = pShadeIndex;
+      g_HudMobys->m_RenderRadius = 0xFF;
+
+      if (isCapital) {
+        pPosition->x += pSpaceWidth;
+      } else {
+        pPosition->x += pTextSpacing->x;
+        g_HudMobys->m_Position.y += pTextSpacing->y;
+        g_HudMobys->m_Position.z = pTextSpacing->z;
+      }
+
+      wasCapital = isCapital;
+
+      if (((*pText >= 'A' && *pText <= 'Z') ||
+          (*pText >= 'a' && *pText <= 'f')) && pTextSpacing) {
+        isCapital = 0;
+      } else {
+        isCapital = 1;
+      }
+    } else {
+      pPosition->x += (pSpaceWidth * 2) / 3;
+      isCapital = 1;
+    }
+
+    pText++;
+  }
+
+  return g_HudMobys;
+}
+#endif
 
 /// @brief Creates shaded line
 void func_8001844C(int pX0, int pY0, int pX1, int pY1) {
@@ -202,6 +351,7 @@ void func_8001860C(int pX0, int pX1, int pY0, int pY1) {
 
 /// @brief Creates rescued dragon text
 void func_80018728(void) {
+#if GAME_VER == VER_NTSC_U
   char *name;
   int length;
   Moby *mobys;
@@ -221,6 +371,32 @@ void func_80018728(void) {
   pos.y = 200;
   pos.z = 3072;
   func_80017FE4(name, &pos, 26, 2);
+#else
+  char buf[32];
+  Vector3D pos;
+  Vector3D spacing;
+  Moby *mobys;
+  int length;
+  int i;
+
+  // TODO: Dragon Moby props struct
+  sprintf(buf, "%s %s", StringRescued,
+          g_DragonNames[((int *)g_DragonCutscene.m_RescuedDragonMoby->m_Props)[14]]);
+
+  length = strlen(buf) - 1;
+  mobys = g_HudMobys;
+
+  pos.x = 254 - length * 8;
+  pos.y = 200;
+  pos.z = 0x1100;
+
+  spacing.x = 0x10;
+  spacing.y = 1;
+  spacing.z = 0x1400;
+
+  func_800181AC(buf, &pos, &spacing, 18, 11);
+#endif
+
   mobys--;
   for (i = 0; (int)g_HudMobys <= (int)mobys; i++) {
     mobys->m_Rotation.z =
@@ -263,10 +439,19 @@ void func_80018908(void) {
   spacing.x = 16;
   spacing.y = 1;
   spacing.z = 5120;
+#if GAME_VER == VER_NTSC_U
   position.x = 199;
+#else
+  position.x = StringDemoModeX;
+#endif
   position.y = 200;
   position.z = 4352;
+#if GAME_VER == VER_NTSC_U
   func_800181AC("DEMO MODE", &position, &spacing, 18, 2);
+#else
+  func_800181AC(StringDemoMode, &position, &spacing,
+                18, 11);
+#endif
   mobys--;
   for (i = 0; (int)g_HudMobys <= (int)mobys; i++) {
     mobys->m_Rotation.z = COSINE_8((g_LevelTicks * 4 + i * 12) & 0xFF) >> 7;
@@ -277,6 +462,7 @@ void func_80018908(void) {
 }
 
 /// @brief Creates tracers, C function, god knows why
+#if GAME_VER == VER_NTSC_U
 void func_800189F0(void) {
 
   int i, j;
@@ -419,6 +605,7 @@ void func_800189F0(void) {
   }
   g_TracerCount = 0;
 }
+#endif
 
 /// @brief Creates the border
 void func_80018F30(void) {
@@ -544,7 +731,11 @@ void func_80019300(void) {
         vec.x = 90;
         vec.y = 36;
         vec.z = 2880;
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 28, 11);
+#else
+        func_800181AC(text, &vec, nullptr, 28, 11);
+#endif
         mobys--;
         for (i = 0; (int)g_HudMobys <= (int)mobys; i++) {
           mobys->m_Rotation.z =
@@ -621,6 +812,29 @@ void func_80019698(void) {
 
 /// @brief Creates the level transition text
 void func_8001973C(void) {
+#if GAME_VER == VER_NTSC_U
+  const int titleAdvance = 8;
+  const int textScale = 18;
+  const int textDepth = 4352;
+  const int letterSpacing = 16;
+  const int letterDepth = 5120;
+  const int textColor = 2;
+  const int transitionEnd = 416;
+  const int titleExitStart = 385;
+  const int treasureExitStart = 384;
+  const int totalTallyStart = 272;
+#else
+  const int titleAdvance = 7;
+  const int textScale = 16;
+  const int textDepth = 5120;
+  const int letterSpacing = 14;
+  const int letterDepth = 5632;
+  const int textColor = 11;
+  const int transitionEnd = 384;
+  const int titleExitStart = 357;
+  const int treasureExitStart = 356;
+  const int totalTallyStart = 256;
+#endif
 
   int levelIndex;
   Moby *mobys;
@@ -631,29 +845,43 @@ void func_8001973C(void) {
 
   levelIndex = (g_NextLevelId / 10 - 1) * 6 + (g_NextLevelId % 10);
   if (g_NextLevelId % 10 == 0) {
+    #if GAME_VER == VER_NTSC_U
     sprintf(textbuffer, "RETURNING HOME...");
+#else
+    sprintf(textbuffer, StringReturningHome);
+#endif
   } else if ((g_NextLevelId < 60 && g_NextLevelId % 10 == 4) ||
              (g_NextLevelId == 63)) {
+#if GAME_VER == VER_NTSC_U
     sprintf(textbuffer, "CONFRONTING %s...", g_LevelNames[levelIndex]);
+#else
+    sprintf(textbuffer, "%s %s", StringConfronting,
+            g_LevelNames[levelIndex]);
+#endif
   } else {
+#if GAME_VER == VER_NTSC_U
     sprintf(textbuffer, "ENTERING %s...", g_LevelNames[levelIndex]);
+#else
+    sprintf(textbuffer, "%s %s", StringEntering_Level,
+            g_LevelNames[levelIndex]);
+#endif
   }
 
-  vec1.x = 256 - (strlen(textbuffer) - 1) * 8;
+  vec1.x = 256 - (strlen(textbuffer) - 1) * titleAdvance;
 
   if (g_LevelTransTicks < 32) {
     vec1.y = SINE_8(g_LevelTransTicks * 2) >> 7;
-  } else if (g_LevelTransTicks >= 385) {
-    vec1.y = SINE_8((416 - g_LevelTransTicks) * 2) >> 7;
+  } else if (g_LevelTransTicks >= titleExitStart) {
+    vec1.y = SINE_8((transitionEnd - g_LevelTransTicks) * 2) >> 7;
   } else {
     vec1.y = 32;
   }
-  vec1.z = 4352;
-  vec2.x = 16;
+  vec1.z = textDepth;
+  vec2.x = letterSpacing;
   vec2.y = 1;
-  vec2.z = 5120;
+  vec2.z = letterDepth;
   mobys = g_HudMobys;
-  func_800181AC(textbuffer, &vec1, &vec2, 18, 2);
+  func_800181AC(textbuffer, &vec1, &vec2, textScale, textColor);
   mobys--;
   for (i = 0; (int)g_HudMobys <= (int)mobys; i++) {
     mobys->m_Rotation.z = COSINE_8(g_LevelTransTicks * 2 + i * 12 & 0xFF) >> 7;
@@ -666,8 +894,10 @@ void func_8001973C(void) {
     for (i = g_GemTotal; i >= 10; i = i / 10) {
       center_offset -= 10;
     }
+#if GAME_VER == VER_NTSC_U
     vec1.x = center_offset + 40;
     vec1.z = 4352;
+#endif
     if (g_LevelTransTicks < 96) {
       int a = g_LevelTransTicks - 64;
       vec1.y = 272 - (SINE_8(a * 2) >> 6);
@@ -681,13 +911,14 @@ void func_8001973C(void) {
     } else if (g_LevelTransTicks < 0x100) {
       int a = g_LevelTransTicks - 224;
       vec1.y = 272 - (SINE_8(a * 2) >> 6);
-    } else if (g_LevelTransTicks <= 383) {
+    } else if (g_LevelTransTicks < treasureExitStart) {
       vec1.y = 208;
-    } else if (g_LevelTransTicks < 416) {
-      vec1.y = 272 - (SINE_8((416 - g_LevelTransTicks) * 2) >> 6);
+    } else if (g_LevelTransTicks < transitionEnd) {
+      vec1.y = 272 - (SINE_8((transitionEnd - g_LevelTransTicks) * 2) >> 6);
     } else {
       vec1.y = 272;
     }
+#if GAME_VER == VER_NTSC_U
     if (g_LevelTransTicks < 224) {
       sprintf(textbuffer, "TREASURE FOUND");
     } else {
@@ -695,8 +926,23 @@ void func_8001973C(void) {
       vec1.x -= 16;
     }
     mobys = g_HudMobys;
-    func_800181AC(textbuffer, &vec1, &vec2, 18, 2);
+    func_800181AC(textbuffer, &vec1, &vec2, textScale, textColor);
     mobys--;
+#else
+    mobys = g_HudMobys;
+    vec1.y += 2;
+    if (g_LevelTransTicks < 224) {
+      vec1.x = StringTreasureFoundXOffset + center_offset;
+      func_800181AC(StringTreasureFound, &vec1, &vec2,
+                    textScale, textColor);
+    } else {
+      vec1.x = StringTotalTreasureXOffset + center_offset;
+      func_800181AC(StringTotalTreasure, &vec1, &vec2,
+                    textScale, textColor);
+    }
+    mobys--;
+    vec1.y -= 2;
+#endif
     for (i = 0; (int)g_HudMobys <= (int)mobys; i++) {
       mobys->m_Rotation.z =
           COSINE_8(g_LevelTransTicks * 2 + i * 12 & 0xFF) >> 7;
@@ -720,7 +966,7 @@ void func_8001973C(void) {
           ((g_LevelGemCount[g_PreviousLevelIndex] - D_8007587C) *
            tally_countdown) /
           tally_duration;
-    } else if (g_LevelTransTicks < 272) {
+    } else if (g_LevelTransTicks < totalTallyStart) {
       displayed_counter =
           g_GemTotal - (g_LevelGemCount[g_PreviousLevelIndex] - D_8007587C);
     } else {
@@ -728,7 +974,7 @@ void func_8001973C(void) {
       if (tally_duration > 64) {
         tally_duration = 64;
       }
-      tally_countdown = 272 + tally_duration - g_LevelTransTicks;
+      tally_countdown = totalTallyStart + tally_duration - g_LevelTransTicks;
       if (tally_countdown < 0) {
         tally_countdown = 0;
       }
@@ -744,7 +990,11 @@ void func_8001973C(void) {
     vec1.z = 3968;
     sprintf(textbuffer, "%d", displayed_counter);
     mobys = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
     func_80017FE4(textbuffer, &vec1, 20, 2);
+#else
+    func_800181AC(textbuffer, &vec1, nullptr, 20, textColor);
+#endif
     mobys--;
     for (i = 0; (int)g_HudMobys <= (int)mobys; i++) {
       mobys->m_Rotation.z =
@@ -752,14 +1002,33 @@ void func_8001973C(void) {
       mobys--;
     }
     for (i = 0; i < 32; i++) {
-      if (g_LevelTransGems[i]._08 != 0) {
+      if (g_LevelTransGems[i].active != 0) {
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+        int spread = (g_LevelTransGems[i].age >> 1) + 32;
+        if (spread > 64) {
+          spread = 128 - spread;
+        }
+#endif
         g_HudMobys--;
         Memset(g_HudMobys, 0, sizeof(Moby));
         g_HudMobys->m_Class = g_RecentGemsCollected[i];
+#if GAME_VER == VER_NTSC_U
         g_HudMobys->m_Position.x =
             320 + center_offset + g_LevelTransGems[i].xOffset;
         g_HudMobys->m_Position.y = 198 - g_LevelTransGems[i].yOffset;
         g_HudMobys->m_Position.z = 0x1000;
+#else
+        g_HudMobys->m_Position.x =
+            320 + center_offset +
+            ((g_LevelTransGems[i].xOffset * SINE_8(g_LevelTransGems[i].age * 2) *
+              spread) >> 18);
+        g_HudMobys->m_Position.y =
+            200 - ((g_LevelTransGems[i].yOffset *
+                    SINE_8(g_LevelTransGems[i].age)) >> 12);
+        g_HudMobys->m_Position.z =
+            0x1000 + ((g_LevelTransGems[i]._04 *
+                       SINE_8(g_LevelTransGems[i].age * 2) * spread) >> 18);
+#endif
         g_HudMobys->m_Rotation.x = g_LevelTransGems[i].rot.x;
         g_HudMobys->m_Rotation.y = g_LevelTransGems[i].rot.y;
         g_HudMobys->m_Rotation.z = g_LevelTransGems[i].rot.z;
@@ -886,7 +1155,9 @@ void func_8001A40C(void) {
   RECT rcStore;
   char szBuf[32];
   Vector3D position;
+#if GAME_VER == VER_NTSC_U
   Vector3D quitMenuSpacing;
+#endif
   Vector3D optionMenuSpacing;
   Vector3D vec4;
   RECT rc1;
@@ -981,6 +1252,7 @@ void func_8001A40C(void) {
       setRGB0(f4, 64, 64, 64);
       f4->y0 = 67;
       f4->y1 = 67;
+#if GAME_VER == VER_NTSC_U
       if (D_800757C8 == 1) {
         act_avail = (g_ActAvailable != 0);
         f4->x0 = 84;
@@ -994,11 +1266,27 @@ void func_8001A40C(void) {
         f4->y2 = 176;
         f4->y3 = 176;
       }
+#else
+      if (D_800757C8 == 1) {
+        act_avail = (g_ActAvailable != 0);
+        f4->x0 = 82;
+        f4->x1 = 430;
+        f4->y2 = 161 + act_avail * 18;
+        f4->y3 = 161 + act_avail * 18;
+      } else {
+        act_avail = g_LevelId % 10 != 0;
+        f4->x0 = 112;
+        f4->x1 = 400;
+        f4->y2 = 158 + act_avail * 18;
+        f4->y3 = 158 + act_avail * 18;
+      }
+#endif
       f4->x2 = f4->x0;
       f4->x3 = f4->x1;
       func_800168DC(f4);
       D_800757B0 = f4 + 1;
 
+#if GAME_VER == VER_NTSC_U
       func_8001844C(224, 97, 288, 97);
       if (D_800757C8 == 1) {
         func_8001844C(84, 67, 428, 67);
@@ -1014,6 +1302,24 @@ void func_8001A40C(void) {
       setXYZ(&position, 186, 82, 3072);
       func_80017FE4("PAUSED", &position, 28, 11); // PAUSED
 
+#else
+      if (D_800757C8 == 1) {
+        func_8001844C(82, 67, 430, 67);
+        func_8001844C(430, 67, 430, 161 + act_avail * 18);
+        func_8001844C(430, 161 + act_avail * 18, 82, 161 + act_avail * 18);
+        func_8001844C(82, 161 + act_avail * 18, 82, 67);
+      } else {
+        func_8001844C(224, 97, 288, 97);
+        func_8001844C(112, 67, 400, 67);
+        func_8001844C(400, 67, 400, 158 + act_avail * 18);
+        func_8001844C(400, 158 + act_avail * 18, 112, 158 + act_avail * 18);
+        func_8001844C(112, 158 + act_avail * 18, 112, 67);
+        setXYZ(&position, StringPausedX, 82, 3072);
+        func_800181AC(StringPaused, &position, nullptr, 28, 11);
+      }
+
+#endif
+#if GAME_VER == VER_NTSC_U
       if (D_800757C8 == 2) {
         // quit menu
         setXYZ(&quitMenuSpacing, 16, 1, 0x1400);
@@ -1039,50 +1345,128 @@ void func_8001A40C(void) {
               COSINE_8((D_800758B8 * 8 + i * 12) & 0xFF) * 3 >> 9;
         }
       } else if (D_800757C8 == 1) {
+#else
+      if (D_800757C8 == 1) {
+#endif
         // options menu
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+        endMoby = g_HudMobys;
+#endif
         setXYZ(&optionMenuSpacing, 15, 1, 0x1600);
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 107, 108, 0x1400);
         func_800181AC("SOUND EFFECTS", &position, &optionMenuSpacing, 16, 11);
+#else
+        position.z = 0x1400;
+        position.y = 79;
+        position.x = StringSoundEffectsX;
+        func_800181AC(StringSoundEffects,
+                      &position, &optionMenuSpacing, 16, 11);
+#endif
         if (D_80075720 == 0) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 11;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 121, 124, 0x1400);
         func_800181AC("MUSIC VOLUME", &position, &optionMenuSpacing, 16, 11);
+#else
+        endMoby = g_HudMobys;
+        position.y = 97;
+        position.x = StringMusicVolumeX;
+        func_800181AC(StringMusicVolume,
+                      &position, &optionMenuSpacing, 16, 11);
+#endif
         if (D_80075720 == 1) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 11;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 107, 140, 0x1400);
         func_800181AC("SPEAKER SETUP", &position, &optionMenuSpacing, 16, 11);
+#else
+        endMoby = g_HudMobys;
+        position.y = 115;
+        position.x = StringSpeakerSetupX;
+        func_800181AC(StringSpeakerSetup,
+                      &position, &optionMenuSpacing, 16, 11);
+#endif
         if (D_80075720 == 2) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 12;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
         if (g_ActAvailable) {
+#if GAME_VER == VER_NTSC_U
           setXYZ(&position, 163, 156, 0x1400);
           func_800181AC("VIBRATION", &position, &optionMenuSpacing, 16, 11);
+#else
+          endMoby = g_HudMobys;
+          position.y = 133;
+          position.x = StringVibrationX;
+          func_800181AC(StringVibration,
+                        &position, &optionMenuSpacing, 16, 11);
+#endif
           if (D_80075720 == 3) {
             curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
             mobyCount = 9;
+#else
+            mobyCount = endMoby - curMoby;
+#endif
           }
         }
 
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 208, act_avail * 16 + 156, 0x1100);
         func_800181AC("CAMERA", &position, &optionMenuSpacing, 16, 11);
+#else
+        endMoby = g_HudMobys;
+        position.y = act_avail * 18 + 133;
+        position.x = StringCameraX;
+        func_800181AC(StringCamera,
+                      &position, &optionMenuSpacing, 16, 11);
+#endif
         if (D_80075720 == 4) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 6;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 238, act_avail * 16 + 172, 0x1100);
         func_800181AC("DONE", &position, &optionMenuSpacing, 16, 11);
+#else
+        endMoby = g_HudMobys;
+        position.y = act_avail * 18 + 151;
+        position.x = StringDoneX;
+        func_800181AC(StringDone,
+                      &position, &optionMenuSpacing, 16, 11);
+#endif
         if (D_80075720 == 5) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 4;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
         for (i = 0; i < mobyCount; ++i) {
@@ -1092,11 +1476,24 @@ void func_8001A40C(void) {
 
         // sound volume bars
         if (D_80075754 == 0) {
+#if GAME_VER == VER_NTSC_U
           setXYZ(&position, 322, 108, 0x1400);
           func_800181AC("OFF", &position, &optionMenuSpacing, 16, 11);
+#else
+          endMoby = g_HudMobys;
+          position.x = 324;
+          position.y = 79;
+          func_800181AC(StringOff, &position,
+                        &optionMenuSpacing, 16, 11);
+#endif
           if (D_80075720 == 0) {
             curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
             for (i = 0; i < 3; ++i) {
+#else
+            mobyCount = endMoby - curMoby;
+            for (i = 0; i < mobyCount; ++i) {
+#endif
               (*curMoby++).m_Rotation.z =
                   COSINE_8((D_800758B8 * 8 + i * 12) & 0xFF) * 3 >> 9;
             }
@@ -1106,8 +1503,16 @@ void func_8001A40C(void) {
             --g_HudMobys;
             Memset(g_HudMobys, 0, sizeof(Moby));
             g_HudMobys->m_Class = MOBYCLASS_LETTER_I; // nice...
+#if GAME_VER == VER_NTSC_U
             g_HudMobys->m_Position.x = 320 + i * 10;
+#else
+            g_HudMobys->m_Position.x = 322 + i * 10;
+#endif
+#if GAME_VER == VER_NTSC_U
             g_HudMobys->m_Position.y = 109;
+#else
+            g_HudMobys->m_Position.y = 80;
+#endif
             g_HudMobys->m_Position.z = 0x1400;
             if (D_80075720 == 0) {
               g_HudMobys->m_Rotation.z =
@@ -1123,11 +1528,24 @@ void func_8001A40C(void) {
 
         // music volume bars
         if (D_80075748 == 0) {
+#if GAME_VER == VER_NTSC_U
           setXYZ(&position, 322, 124, 0x1400);
           func_800181AC("OFF", &position, &optionMenuSpacing, 16, 11);
+#else
+          endMoby = g_HudMobys;
+          position.x = 324;
+          position.y = 97;
+          func_800181AC(StringOff, &position,
+                        &optionMenuSpacing, 16, 11);
+#endif
           if (D_80075720 == 1) {
             curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
             for (i = 0; i < 3; ++i) {
+#else
+            mobyCount = endMoby - curMoby;
+            for (i = 0; i < mobyCount; ++i) {
+#endif
               (*curMoby++).m_Rotation.z =
                   COSINE_8((D_800758B8 * 8 + i * 12) & 0xFF) * 3 >> 9;
             }
@@ -1137,8 +1555,16 @@ void func_8001A40C(void) {
             --g_HudMobys;
             Memset(g_HudMobys, 0, sizeof(Moby));
             g_HudMobys->m_Class = MOBYCLASS_LETTER_I; // nice...
+#if GAME_VER == VER_NTSC_U
             g_HudMobys->m_Position.x = 320 + i * 10;
+#else
+            g_HudMobys->m_Position.x = 322 + i * 10;
+#endif
+#if GAME_VER == VER_NTSC_U
             g_HudMobys->m_Position.y = 125;
+#else
+            g_HudMobys->m_Position.y = 98;
+#endif
             g_HudMobys->m_Position.z = 0x1400;
             if (D_80075720 == 1) {
               g_HudMobys->m_Rotation.z =
@@ -1152,6 +1578,7 @@ void func_8001A40C(void) {
           }
         }
 
+#if GAME_VER == VER_NTSC_U
         // audio type
         setXYZ(&position, 322, 140, 0x1400);
         if (g_Spu.m_AudioMono != 0) {
@@ -1161,15 +1588,36 @@ void func_8001A40C(void) {
           func_800181AC("STEREO", &position, &optionMenuSpacing, 16, 11);
           volumeBarCt = 6;
         }
+#else
+        endMoby = g_HudMobys;
+        position.x = 324;
+        position.y = 115;
+        if (g_Spu.m_AudioMono != 0) {
+          func_800181AC(StringMono,
+                        &position, &optionMenuSpacing, 16, 11);
+        } else {
+          func_800181AC(StringStereo,
+                        &position, &optionMenuSpacing, 16, 11);
+        }
+#endif
         if (D_80075720 == 2) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           for (i = 0; i < volumeBarCt; ++i) {
+#else
+          mobyCount = endMoby - curMoby;
+          for (i = 0; i < mobyCount; ++i) {
+#endif
             (*curMoby++).m_Rotation.z =
                 COSINE_8((D_800758B8 * 8 + i * 12) & 0xFF) * 3 >> 9;
           }
         }
 
         if (g_ActAvailable) {
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+          endMoby = g_HudMobys;
+#endif
+#if GAME_VER == VER_NTSC_U
           setXYZ(&position, 322, 156, 0x1400);
           if (g_ActEnabled != 0) {
             func_800181AC("ON", &position, &optionMenuSpacing, 16, 11);
@@ -1179,15 +1627,32 @@ void func_8001A40C(void) {
             volumeBarCt = 3;
           }
 
+#else
+          position.x = 324;
+          position.y = 133;
+          if (g_ActEnabled != 0) {
+            func_800181AC(StringOn,
+                          &position, &optionMenuSpacing, 16, 11);
+          } else {
+            func_800181AC(StringOff,
+                          &position, &optionMenuSpacing, 16, 11);
+          }
+#endif
           if (D_80075720 == 3) {
             curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
             for (i = 0; i < volumeBarCt; ++i) {
+#else
+            mobyCount = endMoby - curMoby;
+            for (i = 0; i < mobyCount; ++i) {
+#endif
               (*curMoby++).m_Rotation.z =
                   COSINE_8((D_800758B8 * 8 + i * 12) & 0xFF) * 3 >> 9;
             }
           }
         }
 
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 322, act_avail * 16 + 156, 0x1400);
         if (D_80075914 == 2) {
           func_800181AC("ACTIVE", &position, &optionMenuSpacing, 16, 11);
@@ -1196,36 +1661,84 @@ void func_8001A40C(void) {
           func_800181AC("PASSIVE", &position, &optionMenuSpacing, 16, 11);
           volumeBarCt = 7;
         }
+#else
+        endMoby = g_HudMobys;
+        position.x = 324;
+        position.y = act_avail * 18 + 133;
+        if (D_80075914 == 2) {
+          func_800181AC(StringActive,
+                        &position, &optionMenuSpacing, 16, 11);
+        } else {
+          func_800181AC(StringPassive,
+                        &position, &optionMenuSpacing, 16, 11);
+        }
+#endif
         if (D_80075720 == 4) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           for (i = 0; i < volumeBarCt; ++i) {
+#else
+          mobyCount = endMoby - curMoby;
+          for (i = 0; i < mobyCount; ++i) {
+#endif
             (*curMoby++).m_Rotation.z =
                 COSINE_8((D_800758B8 * 8 + i * 12) & 0xFF) * 3 >> 9;
           }
         }
       } else {
         setXYZ(&vec4, 16, 1, 0x1400);
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 199, 110, 0x1100);
         func_800181AC("CONTINUE", &position, &vec4, 18, 11);
+#else
+        endMoby = g_HudMobys;
+        setXYZ(&position, StringContinue_PauseX, 110, 0x1100);
+        func_800181AC(StringContinue_Pause, &position, &vec4, 18, 11);
+#endif
         if (D_80075720 == 0) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 8;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 207, 128, 0x1100);
         func_800181AC("OPTIONS", &position, &vec4, 18, 11);
+#else
+        endMoby = g_HudMobys;
+        setXYZ(&position, StringOptionsX, 128, 0x1100);
+        func_800181AC(StringOptions, &position, &vec4, 18, 11);
+#endif
         if (D_80075720 == 1) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 7;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 191, 146, 0x1100);
         func_800181AC("INVENTORY", &position, &vec4, 18, 11);
+#else
+        endMoby = g_HudMobys;
+        setXYZ(&position, StringInventoryX, 146, 0x1100);
+        func_800181AC(StringInventory, &position, &vec4, 18, 11);
+#endif
         if (D_80075720 == 2) {
           curMoby = g_HudMobys;
+#if GAME_VER == VER_NTSC_U
           mobyCount = 9;
+#else
+          mobyCount = endMoby - curMoby;
+#endif
         }
 
+#if GAME_VER == VER_NTSC_U
         if (g_IsFlightLevel != 0) {
           // flight level
           setXYZ(&position, 231, 164, 0x1100);
@@ -1253,6 +1766,26 @@ void func_8001A40C(void) {
           }
         }
 
+#else
+        if (g_IsFlightLevel != 0) {
+          endMoby = g_HudMobys;
+          setXYZ(&position, StringQuit_PauseX, 164, 0x1100);
+          func_800181AC(StringQuit_Pause, &position, &vec4, 18, 11);
+          if (D_80075720 == 3) {
+            curMoby = g_HudMobys;
+            mobyCount = endMoby - curMoby;
+          }
+        } else if (g_LevelId != (g_LevelId / 10) * 10) {
+          endMoby = g_HudMobys;
+          setXYZ(&position, StringExitLevelX, 164, 0x1100);
+          func_800181AC(StringExitLevel, &position, &vec4, 18, 11);
+          if (D_80075720 == 3) {
+            curMoby = g_HudMobys;
+            mobyCount = endMoby - curMoby;
+          }
+        }
+
+#endif
         for (i = 0; i < mobyCount; ++i) {
           (*curMoby++).m_Rotation.z =
               COSINE_8((D_800758B8 * 8 + i * 12) & 0xFF) * 3 >> 9;
@@ -1272,23 +1805,39 @@ void func_8001A40C(void) {
 
       // completion pct (top right)
       sprintf(szBuf, "%d", completion);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(szBuf, &position, 34, 2);
+#else
+      func_800181AC(szBuf, &position, nullptr, 34, 11);
+#endif
       position.x = 478;
       szBuf[0] = '%';
       szBuf[1] = '\0';
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(szBuf, &position, 34, 2);
+#else
+      func_800181AC(szBuf, &position, nullptr, 34, 11);
+#endif
 
       // gem total (top left)
       setXYZ(&position, 90, 36, 0xB40);
       sprintf(szBuf, "%d", g_GemTotal);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(szBuf, &position, 27, 2);
+#else
+      func_800181AC(szBuf, &position, nullptr, 27, 11);
+#endif
 
       // dragon total (top center)
       setXYZ(&position, 333, 36, 0xB40);
       if (g_DragonTotal > 9)
         position.x = 306;
       sprintf(szBuf, "%d", g_DragonTotal);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(szBuf, &position, 27, 2);
+#else
+      func_800181AC(szBuf, &position, nullptr, 27, 11);
+#endif
 
       // gem chest icon (top left)
       --g_HudMobys;
@@ -1322,7 +1871,11 @@ void func_8001A40C(void) {
           setRECT(&rc1, i * 27 + 24, 50, 24, 16);
           if (i >= g_EggTotal) {
             setXYZ(&position, 36 + i * 27, 58, 0x1800);
+#if GAME_VER == VER_NTSC_U
             func_80017FE4("X", &position, 0, 2);
+#else
+            func_800181AC("X", &position, nullptr, 0, 11);
+#endif
             setXYZ(&position, 32, 32, 32);
             func_8001919C(&rc1, &g_Hud.m_OrbAndEggSprite[1],
                           (ColorInt *)&position);
@@ -1363,6 +1916,7 @@ void func_8001A40C(void) {
         world_lt_3_offset = 0;
       }
 
+#if GAME_VER == VER_NTSC_U
       worldNameLen = (10 * (strlen(g_HomeworldNames[D_80075744]) - 1) - 158);
       setXYZ(&position, D_800757CC - worldNameLen, 92, 3584);
       setXYZ(&levelNameSpacing, 20, 2, 0x1000);
@@ -1375,12 +1929,37 @@ void func_8001A40C(void) {
         endMoby++;
       }
 
+#else
+      position.x = D_800757CC + 170;
+      for (i = 0; g_HomeworldNames[D_80075744][i] != 0; i++) {
+        if (g_HomeworldNames[D_80075744][i] < 91) {
+          position.x -= 9;
+        }
+      }
+      position.y = 92;
+      position.z = 3584;
+      setXYZ(&levelNameSpacing, 18, 2, 0x1100);
+      endMoby = g_HudMobys;
+      func_800181AC(g_HomeworldNames[D_80075744], &position, &levelNameSpacing,
+                    21, 11);
+      endMoby--;
+      for (i = 0; (int)endMoby >= (int)g_HudMobys; i++) {
+        endMoby->m_Rotation.z =
+            COSINE_8(D_800758B8 * 8 + i * 12 & 0xFF) >> 7;
+        endMoby--;
+      }
+
+#endif
       // gem chest (above table)
 
       --g_HudMobys;
       Memset(g_HudMobys, 0, sizeof(Moby));
       g_HudMobys->m_Class = MOBYCLASS_HUD_GEM_CHEST;
+#if GAME_VER == VER_NTSC_U
       temp = world_lt_3_offset + 346;
+#else
+      temp = world_lt_3_offset + 348;
+#endif
       setXYZ(&g_HudMobys->m_Position, D_800757CC + temp, 108, 0xC00);
       g_HudMobys->m_Rotation.y = COSINE_8(g_Hud.unk_0x3c) >> 9;
       g_HudMobys->m_Rotation.z = g_Hud.unk_0x3c;
@@ -1393,7 +1972,11 @@ void func_8001A40C(void) {
       Memset(g_HudMobys, 0, sizeof(Moby));
       g_HudMobys->m_Class = MOBYCLASS_HUD_DRAGON;
       i = 0;
+#if GAME_VER == VER_NTSC_U
       setXYZ(&g_HudMobys->m_Position, D_800757CC + 465, 110, 0x780);
+#else
+      setXYZ(&g_HudMobys->m_Position, D_800757CC + 467, 110, 0x780);
+#endif
       g_HudMobys->m_Rotation.z = COSINE_8((D_800758B8 * 8) & 0xFF) >> 8;
       g_HudMobys->m_DepthOffset = 127;
       g_HudMobys->m_SpecularMetalType = 11;
@@ -1417,22 +2000,43 @@ void func_8001A40C(void) {
           // 3 border lines between level stats
           func_8001844C(D_800757CC + 112, level_y - 11, D_800757CC + 208,
                         level_y - 11);
+#if GAME_VER == VER_NTSC_U
           func_8001844C(D_800757CC + 314 + world_lt_3_offset, level_y - 11,
                         D_800757CC + 378 + world_lt_3_offset, level_y - 11);
+#else
+          func_8001844C(D_800757CC + 316 + world_lt_3_offset, level_y - 11,
+                        D_800757CC + 380 + world_lt_3_offset, level_y - 11);
+#endif
+#if GAME_VER == VER_NTSC_U
           func_8001844C(D_800757CC + 430, level_y - 11, D_800757CC + 494,
                         level_y - 11);
+#else
+          func_8001844C(D_800757CC + 432, level_y - 11, D_800757CC + 496,
+                        level_y - 11);
+#endif
 
           endMoby = g_HudMobys;
 
           // level stats - level name
+#if GAME_VER == VER_NTSC_U
           setXYZ(&position, D_800757CC + 36, level_y, 0x1100);
           setXYZ(&levelNameSpacing, 16, 1, 0x1400);
           func_800181AC(g_LevelNames[D_80075744 * 6 + i], &position,
                         &levelNameSpacing, 18, 2);
+#else
+          setXYZ(&position, D_800757CC + 26, level_y, 0x1400);
+          setXYZ(&levelNameSpacing, 14, 1, 0x1600);
+          func_800181AC(g_LevelNames[D_80075744 * 6 + i], &position,
+                        &levelNameSpacing, 16, 11);
+#endif
 
           // level stats - gem count
 
+#if GAME_VER == VER_NTSC_U
           position.x = 0x113 + D_800757CC + world_lt_3_offset;
+#else
+          position.x = 0x115 + D_800757CC + world_lt_3_offset;
+#endif
 
           if (g_LevelGemCount[D_80075744 * 6 + i] < 1000)
             position.x += 18;
@@ -1441,33 +2045,85 @@ void func_8001A40C(void) {
           if (g_LevelGemCount[D_80075744 * 6 + i] < 10)
             position.x += 18;
           sprintf(szBuf, "%d", g_LevelGemCount[D_80075744 * 6 + i]);
+#if GAME_VER == VER_NTSC_U
           func_80017FE4(szBuf, &position, 18, 2);
+#else
+          func_800181AC(szBuf, &position, nullptr, 18, 11);
+#endif
+#if GAME_VER == VER_NTSC_U
           position.x = D_800757CC + 346 + world_lt_3_offset;
+#else
+          position.x = D_800757CC + 348 + world_lt_3_offset;
+#endif
           position.z = 0x1800;
+#if GAME_VER == VER_NTSC_U
           func_80017FE4("/", &position, 18, 2);
+#else
+          func_800181AC("/", &position, nullptr, 18, 11);
+#endif
+#if GAME_VER == VER_NTSC_U
           position.x = D_800757CC + 363 + world_lt_3_offset;
+#else
+          position.x = D_800757CC + 365 + world_lt_3_offset;
+#endif
           position.z = 0x1100;
           sprintf(szBuf, "%d", g_TargetGemCounts[D_80075744 * 6 + i]);
+#if GAME_VER == VER_NTSC_U
           func_80017FE4(szBuf, &position, 18, 2);
+#else
+          func_800181AC(szBuf, &position, nullptr, 18, 11);
+#endif
 
           // level stats - dragon count
           if (g_TargetDragonCounts[D_80075744 * 6 + i] != 0) {
+#if GAME_VER == VER_NTSC_U
             position.x = D_800757CC + 445;
+#else
+            position.x = D_800757CC + 447;
+#endif
 
             sprintf(szBuf, "%d", g_LevelDragonCount[D_80075744 * 6 + i]);
+#if GAME_VER == VER_NTSC_U
             func_80017FE4(szBuf, &position, 18, 2);
+#else
+            func_800181AC(szBuf, &position, nullptr, 18, 11);
+#endif
+#if GAME_VER == VER_NTSC_U
             position.x = D_800757CC + 462;
+#else
+            position.x = D_800757CC + 464;
+#endif
             position.z = 0x1800;
+#if GAME_VER == VER_NTSC_U
             func_80017FE4("/", &position, 18, 2);
+#else
+            func_800181AC("/", &position, nullptr, 18, 11);
+#endif
+#if GAME_VER == VER_NTSC_U
             position.x = D_800757CC + 479;
+#else
+            position.x = D_800757CC + 481;
+#endif
             position.z = 0x1100;
             sprintf(szBuf, "%d", g_TargetDragonCounts[D_80075744 * 6 + i]);
+#if GAME_VER == VER_NTSC_U
             func_80017FE4(szBuf, &position, 18, 2);
+#else
+            func_800181AC(szBuf, &position, nullptr, 18, 11);
+#endif
           } else {
             // use the "/" to make "-" i guess
+#if GAME_VER == VER_NTSC_U
             position.x = D_800757CC + 462;
+#else
+            position.x = D_800757CC + 464;
+#endif
             position.z = 0x1800;
+#if GAME_VER == VER_NTSC_U
             func_80017FE4("/", &position, 18, 2);
+#else
+            func_800181AC("/", &position, nullptr, 18, 11);
+#endif
             g_HudMobys->m_Rotation.x = 41;
           }
 
@@ -1485,14 +2141,23 @@ void func_8001A40C(void) {
           if (g_EggTotal > 0 && D_80075744 < 3) {
             int j;
             for (j = 0; j < g_TargetEggCounts[D_80075744 * 6 + i]; j++) {
+#if GAME_VER == VER_NTSC_U
               rc2.x = D_800757CC + 232 + j * 24 +
                       ((g_TargetEggCounts[D_80075744 * 6 + i] == 1) ? 24 : 0);
+#else
+              rc2.x = D_800757CC + 238 + j * 24 +
+                      ((g_TargetEggCounts[D_80075744 * 6 + i] == 1) ? 24 : 0);
+#endif
               rc2.y = level_y - 8;
               rc2.w = 24;
               rc2.h = 16;
               if (j >= g_LevelEggCount[D_80075744 * 6 + i]) {
                 setXYZ(&position, rc2.x + 12, level_y, 0x1800);
+#if GAME_VER == VER_NTSC_U
                 func_80017FE4("X", &position, 0, 2);
+#else
+                func_800181AC("X", &position, nullptr, 0, 11);
+#endif
                 setXYZ(&position, 32, 32, 32);
                 func_8001919C(&rc2, &g_Hud.m_OrbAndEggSprite[1],
                               (ColorInt *)&position);
@@ -1509,10 +2174,20 @@ void func_8001A40C(void) {
       }
       func_8001844C(D_800757CC + 112, level_y - 11, D_800757CC + 208,
                     level_y - 11);
+#if GAME_VER == VER_NTSC_U
       func_8001844C(D_800757CC + 320, level_y - 11, D_800757CC + 384,
                     level_y - 11);
+#else
+      func_8001844C(D_800757CC + 324, level_y - 11, D_800757CC + 388,
+                    level_y - 11);
+#endif
+#if GAME_VER == VER_NTSC_U
       func_8001844C(D_800757CC + 430, level_y - 11, D_800757CC + 494,
                     level_y - 11);
+#else
+      func_8001844C(D_800757CC + 432, level_y - 11, D_800757CC + 496,
+                    level_y - 11);
+#endif
     }
 
     g_SonyImage.m_ShadedMobys[0] = nullptr;
@@ -1692,8 +2367,12 @@ void func_8001CA38(void) {
         setRGB0(&g_DB[1].m_DrawEnv, 0, 0, 0);
         DrawSync(0);
         VSync(0);
+#if GAME_VER == VER_NTSC_U
         setRECT(&rc, 0, 0, 512, 480);
         ClearImage(&rc, 0, 0, 0);
+#else
+        ClearFramebuffers();
+#endif
       }
     }
   } else if (D_80075940 == 1) {
@@ -1724,13 +2403,29 @@ void func_8001CA38(void) {
 
       if (g_LoadStage > 10 && g_GameOverTicks > 420) {
         setXYZ(&spacing, 16, 1, 0x1400);
+#if GAME_VER == VER_NTSC_U
         setXYZ(&position, 174, 208, 0x1100);
         func_800181AC("PRESS START", &position, &spacing, 18, 11);
+#else
+        curMoby = g_HudMobys;
+        setXYZ(&position, StringPressStartX, 208, 0x1100);
+        func_800181AC(StringPressStart, &position, &spacing, 18, 11);
+#endif
+
+#if GAME_VER == VER_NTSC_U
         curMoby = g_HudMobys;
         for (i = 0; i < 10; ++i) {
           (*curMoby++).m_Rotation.z =
               COSINE_8((g_GameOverTicks * 4 + i * 12) & 0xFF) * 3 >> 9;
         }
+#else
+        curMoby--;
+        for (i = 0; (int)g_HudMobys <= (int)curMoby; ++i) {
+          curMoby->m_Rotation.z =
+              COSINE_8((g_GameOverTicks * 4 + i * 12) & 0xFF) * 3 >> 9;
+          curMoby--;
+        }
+#endif
       }
 
       g_SonyImage.m_ShadedMobys[0] = nullptr;
@@ -1785,8 +2480,12 @@ void func_8001CA38(void) {
         setRGB0(&g_DB[1].m_DrawEnv, 0, 0, 0);
         DrawSync(0);
         VSync(0);
+#if GAME_VER == VER_NTSC_U
         setRECT(&rc, 0, 0, 512, 480);
         ClearImage(&rc, 0, 0, 0);
+#else
+        ClearFramebuffers();
+#endif
       }
     }
   }
@@ -2032,7 +2731,11 @@ typedef struct {
   short y, y2;
 } FAIRYRECT;
 
+#if GAME_VER == VER_NTSC_U
 extern FAIRYRECT g_FairyDialogueBoxSizes[8];
+#else
+extern short g_FairyDialogueBoxSizes[8];
+#endif
 
 /// @brief Gamestate 11
 void func_8001D718(void) {
@@ -2043,6 +2746,11 @@ void func_8001D718(void) {
 
   Moby *curMoby;
   unsigned char textLen;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  Moby *textStart;
+  int boxLeft;
+  int boxRight;
+#endif
 
   // Dunno what this is about
   if (D_800756FC == g_Buffers.m_HudOTStart) {
@@ -2054,6 +2762,7 @@ void func_8001D718(void) {
   }
 
   if (g_FairyCutscene.m_State == 1) {
+#if GAME_VER == VER_NTSC_U
     func_8001860C(
         g_FairyCutscene.m_MenuOffsetX +
             g_FairyDialogueBoxSizes[g_FairyCutscene.m_MenuDialoguePage].x,
@@ -2303,6 +3012,94 @@ void func_8001D718(void) {
         func_800181AC("SLOT 2", &position, &spacing, 14, 11);
       }
     }
+#else
+    if (g_FairyCutscene.m_MenuOffsetX != 0) {
+      boxRight = 492;
+      boxLeft = boxRight - g_FairyDialogueBoxSizes[g_FairyCutscene.m_MenuDialoguePage];
+    } else {
+      boxLeft = 20;
+      boxRight = g_FairyDialogueBoxSizes[g_FairyCutscene.m_MenuDialoguePage] + 20;
+    }
+    func_8001860C(boxLeft, boxRight, 36, 124);
+
+    spacing.x = 14;
+    spacing.y = 1;
+    spacing.z = 0x1600;
+    position.z = 0x1400;
+
+    switch (g_FairyCutscene.m_MenuDialoguePage) {
+    case 0:
+      position.x = boxLeft + 20;
+      position.y = 50;
+      position.z = 0x1100;
+      spacing.x = 16;
+      spacing.y = 1;
+      spacing.z = 0x1400;
+      func_800181AC(StringHiSpyro, &position, &spacing, 18, 11);
+
+      spacing.x = 14;
+      spacing.y = 1;
+      spacing.z = 0x1600;
+      position.z = 0x1400;
+      textStart = g_HudMobys;
+      position.x = boxLeft + 28;
+      position.y += 24;
+      func_800181AC(StringSaveGame, &position, &spacing, 16, 11);
+      position.y += 19;
+      if (g_FairyCutscene.m_MenuSelectedOption == 0) {
+        curMoby = g_HudMobys;
+        textLen = textStart - curMoby;
+      }
+
+      textStart = g_HudMobys;
+      position.x = boxLeft + 28;
+      func_800181AC(StringReplayDragon, &position, &spacing, 16, 11);
+      position.y += 19;
+      if (g_FairyCutscene.m_MenuSelectedOption == 1) {
+        curMoby = g_HudMobys;
+        textLen = textStart - curMoby;
+      }
+
+      textStart = g_HudMobys;
+      position.x = boxLeft + 28;
+      func_800181AC(StringContinue_Fairy, &position,
+                    &spacing, 16, 11);
+      if (g_FairyCutscene.m_MenuSelectedOption == 2) {
+        curMoby = g_HudMobys;
+        textLen = textStart - curMoby;
+      }
+      for (i = 0; i < textLen; i++) {
+        (curMoby++)->m_Rotation.z =
+            COSINE_8(((g_FairyCutscene.m_AnimationTimer * 4) + (i * 12)) &
+                     0xFF) * 3 >> 9;
+      }
+      break;
+
+    case 1:
+      textStart = g_HudMobys;
+      position.y = 51;
+      position.x = boxLeft + StringNoSaveFileXOffset;
+      func_800181AC(StringNoSaveFile, &position, &spacing, 16, 11);
+      curMoby = g_HudMobys;
+      textLen = textStart - curMoby;
+      position.y += 24;
+      for (i = 0; i < textLen; i++) {
+        (curMoby++)->m_Rotation.z =
+            COSINE_8(((g_FairyCutscene.m_AnimationTimer * 4) + (i * 12)) &
+                     0xFF) * 3 >> 9;
+      }
+
+      position.x = boxLeft + StringPleaseRestartWithXOffset;
+      func_800181AC(StringPleaseRestartWith, &position, &spacing, 16, 11);
+      position.y += 18;
+      position.x = boxLeft + StringAMemoryCardToXOffset;
+      func_800181AC(StringAMemoryCardTo, &position, &spacing, 16, 11);
+      position.y += 18;
+      position.x = boxLeft + StringEnableSaveGamesXOffset;
+      func_800181AC(StringEnableSaveGames, &position, &spacing, 16, 11);
+      break;
+    }
+#endif
   }
 
   func_800521C0();
@@ -2360,17 +3157,34 @@ void func_8001E24C(void) {
       if (g_Balloonist.m_Homeworld < 5) {
         // Minus one is due to the homeworlds starting at 10
         int homeworld = g_NextLevelId / 10;
+#if GAME_VER == VER_NTSC_U
         sprintf(buf, "ENTERING %s WORLD", g_HomeworldNames[homeworld - 1]);
+#else
+        sprintf(buf, "%s %s %s",
+                StringEntering_World,
+                g_HomeworldNames[homeworld - 1], StringWorld);
+#endif
       } else if (g_Balloonist.m_Homeworld == 5) {
         // Exception for Gnasty's World so it doesn't display
         // GNASTY'S WORLD WORLD (like in July)
+#if GAME_VER == VER_NTSC_U
         int homeworld = g_NextLevelId / 10;
         sprintf(buf, "ENTERING %s", g_HomeworldNames[homeworld - 1]);
+#else
+        sprintf(buf, "%s",
+                StringEnteringGnastysWorld);
+#endif
       } else {
         int homeworld = g_NextLevelId / 10;
         int level = g_NextLevelId % 10;
+#if GAME_VER == VER_NTSC_U
         sprintf(buf, "ENTERING %s",
                 g_LevelNames[level + ((homeworld - 1) * 6)]);
+#else
+        sprintf(buf, "%s %s",
+                StringEntering_Level,
+                g_LevelNames[level + ((homeworld - 1) * 6)]);
+#endif
       }
 
       // sprintf(buf, fmt, levelName);
@@ -2384,7 +3198,11 @@ void func_8001E24C(void) {
 
       curMoby = g_HudMobys;
 
+#if GAME_VER == VER_NTSC_U
       func_800181AC(buf, &position, &spacing, 16, 2);
+#else
+      func_800181AC(buf, &position, &spacing, 16, 11);
+#endif
 
       rotOff = 0;
       while ((int)(--curMoby) >= (int)g_HudMobys) {
@@ -2459,8 +3277,13 @@ void func_8001E24C(void) {
 
 /// @brief Gamestate 13
 void func_8001E6B8(void) {
+#if GAME_VER == VER_NTSC_U
+  const int textStartTick = 140;
+#else
+  const int textStartTick = 132;
+#endif
   if (g_TitlescreenState.m_State == TSS_Active &&
-      g_TitlescreenState.m_Tick > 139) {
+      g_TitlescreenState.m_Tick >= textStartTick) {
     int a, i;
     Moby *curMoby;
 
@@ -2476,6 +3299,7 @@ void func_8001E6B8(void) {
 
     curMoby = g_HudMobys;
 
+#if GAME_VER == VER_NTSC_U
     if (g_TitlescreenState.m_DemoType == TSD_Cutscene) {
       position.x = 92;
       func_800181AC("IN THE WORLD OF DRAGONS...", &position, &spacing, 0x10,
@@ -2506,10 +3330,27 @@ void func_8001E6B8(void) {
     if (a > g_TitlescreenState.m_Tick) {
       g_HudMobys += (a - g_TitlescreenState.m_Tick) >> 1;
     }
+#else
+    position.x = StringTheAdventureBeginsX;
+    func_800181AC(StringTheAdventureBegins, &position, &spacing, 0x10, 0xB);
+    a = StringTheAdventureBeginsRevealTick;
+    if (g_TitlescreenState.m_Tick > a) {
+      if (curMoby - g_HudMobys > (g_TitlescreenState.m_Tick - a) >> 1) {
+        g_HudMobys = curMoby - ((g_TitlescreenState.m_Tick - a) >> 1);
+      }
+    } else {
+      g_HudMobys = curMoby;
+    }
+#endif
 
     i = 0;
     while ((int)(--curMoby) >= (int)g_HudMobys) {
+#if GAME_VER == VER_NTSC_U
       int l = g_TitlescreenState.m_Tick - 140 - i;
+#else
+      int letterTick = i + 140;
+      int l = g_TitlescreenState.m_Tick - letterTick;
+#endif
 
       if (l < 56) {
         curMoby->m_Rotation.z = l * 8 + 64;
@@ -2535,8 +3376,13 @@ void func_8001E6B8(void) {
     func_80023AC4();
 
     // Put the 3D text inside of the world
+#if GAME_VER == VER_NTSC_U
     ((int *)g_WorldOT)[64] = ((int *)g_HudOT)[0];
     ((int *)g_WorldOT)[65] = ((int *)g_HudOT)[1];
+#else
+    ((int *)g_WorldOT)[128] = ((int *)g_HudOT)[0];
+    ((int *)g_WorldOT)[129] = ((int *)g_HudOT)[1];
+#endif
     ((int *)g_HudOT)[0] = 0;
     ((int *)g_HudOT)[1] = 0;
   }
@@ -2549,6 +3395,7 @@ void func_8001E6B8(void) {
 }
 
 /// @brief Gamestate 14
+#if GAME_VER == VER_NTSC_U
 void func_8001E9C8(void) {
 
   setRGB0(&g_DB[0].m_DrawEnv, g_Cyclorama.m_BackgroundColor.r,
@@ -2591,8 +3438,10 @@ void func_8001E9C8(void) {
   PutDrawEnv(&g_CurDB->m_DrawEnv);
   DrawOTag(func_80016784(0x800));
 }
+#endif
 
 /// @brief Gamestate 15
+#if GAME_VER == VER_NTSC_U
 void func_8001EB80(void) {
   Vector3D spacing;
   Vector3D position;
@@ -2643,6 +3492,7 @@ void func_8001EB80(void) {
   PutDrawEnv(&g_CurDB->m_DrawEnv);
   DrawOTag(func_80016784(0x800));
 }
+#endif
 
 void func_credits_8007BFD0(void); // Overlay functions
 
@@ -2693,7 +3543,9 @@ void GamestateDraw(void) {
       func_8001D718();
     } else if (g_Gamestate == GS_Balloonist) {
       func_8001E24C();
-    } else if (g_Gamestate == GS_TitleScreen) {
+    }
+#if GAME_VER == VER_NTSC_U
+    else if (g_Gamestate == GS_TitleScreen) {
       if (g_TitlescreenState.m_Mode == TSM_Demo) {
         func_8001E6B8();
       } else {
@@ -2708,6 +3560,11 @@ void GamestateDraw(void) {
         func_8001EB80();
       }
     }
+#else
+    else if (g_Gamestate == GS_TitleScreen) {
+      func_8001E6B8();
+    }
+#endif
   } else {
 
     // Gamestate 0
@@ -2740,7 +3597,9 @@ void GamestateDraw(void) {
       func_80018F30();
     }
 
+#if GAME_VER == VER_NTSC_U
     func_800189F0();
+#endif
     DrawSync(0);
 
     // If demo mode, we always wait one frame, probably for demo consistency

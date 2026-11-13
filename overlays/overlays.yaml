@@ -3,9 +3,17 @@
 # and tools/overlays/generate_overlay_ld.py for how it's used
 
 - name: LEVEL_10
+#if GAME_VER == VER_NTSC_U
   psyq_overlay_index: 11
+#else
+  psyq_overlay_index: 4
+#endif
   description: Artisans
+#if GAME_VER == VER_NTSC_U
   padding_garbage: [0x2A, 0x2A, 0x2A]
+#else
+  padding_garbage: [0x65, 0x72, 0x74]
+#endif
   files:
     - balloonist.c
     - moby_update.c
@@ -14,6 +22,7 @@
     - particle_spawn.c
     - terminator.c
 
+#if GAME_VER == VER_NTSC_U
 - name: LEVEL_11
   psyq_overlay_index: 12
   description: Stone Hill
@@ -36,10 +45,20 @@
     - particle_spawn.c
     - terminator.c
 
+#endif
+
 - name: LEVEL_13
+#if GAME_VER == VER_NTSC_U
   psyq_overlay_index: 14
+#else
+  psyq_overlay_index: 5
+#endif
   description: Town Square
+#if GAME_VER == VER_NTSC_U
   padding_garbage: [0x2A, 0x2A, 0x2A]
+#else
+  padding_garbage: [0x5F, 0x73, 0x68]
+#endif
   files:
     - balloonist.c
     - moby_update.c
@@ -48,6 +67,7 @@
     - particle_spawn.c
     - terminator.c
 
+#if GAME_VER == VER_NTSC_U
 - name: LEVEL_14
   psyq_overlay_index: 15
   description: Toasty
@@ -58,9 +78,18 @@
     - particle_spawn.c
     - terminator.c
 
+#endif
+
 - name: LEVEL_15
+#if GAME_VER == VER_NTSC_U
   psyq_overlay_index: 16
+#else
+  psyq_overlay_index: 6
+#endif
   description: Sunny Flight
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  padding_garbage: [0x0D, 0x50]
+#endif
   files:
     - flight.c
     - moby_update.c
@@ -69,6 +98,7 @@
     - particle_spawn.c
     - terminator.c
 
+#if GAME_VER == VER_NTSC_U
 - name: LEVEL_20
   psyq_overlay_index: 17
   description: Peace Keepers
@@ -393,3 +423,4 @@
   files:
     - titlescreen.c
     - terminator.c
+#endif

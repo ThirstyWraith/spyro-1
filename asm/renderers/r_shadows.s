@@ -598,10 +598,18 @@ glabel func_80059F8C
 /* 4AB20 8005A320 FFFF2120 */  addi       $at, $at, -0x1 /* handwritten instruction */
 /* 4AB24 8005A324 00000000 */  nop
 /* 4AB28 8005A328 0100184A */  RTPS
+.if GAME_VER >= VER_C3_DEMO_NTSC_U
+                               sra        $t5, $t6, 16
+                               addi       $t4, $t5, 0x0
+                               blez       $t4, .L8005A02C
+                                addi      $t4, $t5, -0xf0
+                               bgez       $t4, .L8005A02C
+.else
 /* 4AB2C 8005A32C 3FFFC019 */  blez       $t6, .L8005A02C
 /* 4AB30 8005A330 F0000D3C */   lui       $t5, (0xF00000 >> 16)
 /* 4AB34 8005A334 2268CD01 */  sub        $t5, $t6, $t5 /* handwritten instruction */
 /* 4AB38 8005A338 3CFFA105 */  bgez       $t5, .L8005A02C
+.endif
 /* 4AB3C 8005A33C 006C0E00 */   sll       $t5, $t6, 16
 /* 4AB40 8005A340 036C0D00 */  sra        $t5, $t5, 16
 /* 4AB44 8005A344 0800AC21 */  addi       $t4, $t5, 0x8 /* handwritten instruction */

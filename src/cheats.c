@@ -162,6 +162,7 @@ int CheatTable[CHEAT_COUNT][CHEAT_INPUT_BUFFER_SIZE] = {
 /* clang-format on */
 
 // Resets cheat input buffer
+#if GAME_VER == VER_NTSC_U
 void CheatResetBuffer(void) {
   int i;
 
@@ -351,3 +352,5 @@ void CheatsProcess(void) {
     }
   }
 }
+
+#endif

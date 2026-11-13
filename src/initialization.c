@@ -14,6 +14,7 @@
 #include "cutscene.h"
 #include "environment.h"
 #include "gamepad.h"
+#include "gamestates/draw.h"
 #include "gamestates/init.h"
 #include "graphics.h"
 #include "images.h"
@@ -24,6 +25,7 @@
 #include "sony_image.h"
 #include "spu.h"
 #include "spyro.h"
+#include "titlescreen.h"
 #include "variables.h"
 #include "wad.h"
 
@@ -31,9 +33,16 @@
 
 extern int _stacksize;
 
+#if GAME_VER == VER_C3_DEMO_NTSC_U
+const char WadFileName[] = "\\DRAGON\\WAD.WAD;1";
+const char MusicFileName[] = "\\DRAGON\\CDEMO.STR;1";
+#endif
+
 // Graphics init
 void GraphicsInitialize(void) {
+#if GAME_VER == VER_NTSC_U
   RECT clearRect;
+#endif
 
   SetDispMask(0);   // Disable display
   ResetGraph(0);    // Reset the GPU
@@ -69,11 +78,15 @@ void GraphicsInitialize(void) {
   g_DB[0].m_DrawEnv.dtd = 1; // Enable dithering
   g_DB[1].m_DrawEnv.dtd = 1;
 
+#if GAME_VER == VER_NTSC_U
   // Clear both screen buffers
   setRECT(&clearRect, 0, 0, 512, 512);
   ClearImage(&clearRect, 0, 0, 0);
-
   DrawSync(0);    // Wait for the GPU to finish
+#else
+  ClearFramebuffers();
+#endif
+
   SetDispMask(1); // Enable display
 }
 
@@ -102,7 +115,9 @@ void GamepadInitialize(void) {
 }
 
 // Initializes Memory Card
+#if GAME_VER == VER_NTSC_U
 void MemoryCardInitialize(void) { MemCardInit(0); }
+#endif
 
 // Initializes the CD stuff
 void CDInitialize(void) {
@@ -130,8 +145,13 @@ void CDInitialize(void) {
 
 // Loads the WAD header
 void WadInitialize(void) {
+
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  g_CdState.m_WadSector = CDGetFileSector((char *)WadFileName);
+#else
   // TODO: lba.h from mkpsxiso
   g_CdState.m_WadSector = 37;
+#endif
 
   // Read the WAD header into overlay space
   CDLoadSync(g_CdState.m_WadSector, g_OverlaySpacePointer, 2048, 0, 600);
@@ -145,7 +165,9 @@ int MusicInitialize(void) {
   // Unused 8 byte string, likely a sprintf leftover
   u_char pad[8];
   int i, j, tableIdx;
-
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  D_8006F200[0] = CDGetFileSector((char *)MusicFileName);
+#endif
   for (i = 0; i < PETE_XA_COUNT; i++) {
     for (j = 0; j < PETE_XA_TRACKS; j++) {
       tableIdx = i * PETE_XA_TRACKS + j;
@@ -230,6 +252,7 @@ void Terminator_titlescreen_code(void); // Titlescreen terminator
 
 // Init function
 void Initialize(void) {
+#if GAME_VER == VER_NTSC_U
   RECT frameRect;
   RECT pad;
   char *levelVram;
@@ -247,9 +270,17 @@ void Initialize(void) {
   const int rgb24_h = 240;
   const int image_size = 512 * 3 * 240;
 
+#else
+  char *startupImages[4];
+  int i;
+  int frameCountStart;
+#endif
+
   GraphicsInitialize(); // Graphics init
 
+#if GAME_VER == VER_NTSC_U
   MemoryCardInitialize(); // Memory card init
+#endif
 
   GamepadInitialize(); // Gamepad init
   SpuInitialize();     // Sound init
@@ -260,6 +291,7 @@ void Initialize(void) {
   SetGeomOffset(256, 120); // Set the screen center
   SetGeomScreen(341);      // Set the FOV
 
+#if GAME_VER == VER_NTSC_U
   // Set the copy buffer to the titlescreen terminator
   g_Buffers.m_CopyBuf = Terminator_titlescreen_code;
   // Ditto for the disc
@@ -409,4 +441,66 @@ void Initialize(void) {
   g_DeltaTime = 2;
   g_UnprocessedFrames = 0;
   g_Environment.m_LodDistance = 0x8000;
+#else
+  WadInitialize();
+
+  g_Buffers.m_CopyBuf = g_OverlaySpacePointer;
+  g_Buffers.m_DiscCopyBuf = g_OverlaySpacePointer;
+  func_8005B7D8();
+
+  startupImages[0] = g_Buffers.m_CopyBuf + 0x80000;
+  CDLoadSync(g_CdState.m_WadSector, startupImages[0],
+             g_WadHeader.m_UniversalLogo.m_Length,
+             g_WadHeader.m_UniversalLogo.m_Offset, 600);
+  startupImages[1] = startupImages[0] + g_WadHeader.m_UniversalLogo.m_Length;
+  CDLoadSync(g_CdState.m_WadSector, startupImages[1],
+             g_WadHeader.m_wad1.m_Length, g_WadHeader.m_wad1.m_Offset, 600);
+  startupImages[2] = startupImages[1] + g_WadHeader.m_wad1.m_Length;
+  CDLoadSync(g_CdState.m_WadSector, startupImages[2],
+             g_WadHeader.m_TitleScreenOverlay.m_Length,
+             g_WadHeader.m_TitleScreenOverlay.m_Offset, 600);
+  startupImages[3] = startupImages[2] + g_WadHeader.m_TitleScreenOverlay.m_Length;
+  CDLoadSync(g_CdState.m_WadSector, startupImages[3],
+             g_WadHeader.m_CutsceneData[0].m_Length,
+             g_WadHeader.m_CutsceneData[0].m_Offset, 600);
+
+  SetDispMask(0);
+  g_DB[0].m_DispEnv.isrgb24 = 1;
+  g_DB[1].m_DispEnv.isrgb24 = 1;
+
+  for (i = 0; i < 4; i++) {
+    frameCountStart = VSync(-1);
+    FadeStartupImage(startupImages[i], g_Buffers.m_CopyBuf, 1);
+    while (VSync(-1) - frameCountStart < 210) {
+      VSync(0);
+    }
+    FadeStartupImage(startupImages[i], g_Buffers.m_CopyBuf, 0);
+    ClearFramebuffers();
+    VSync(8);
+  }
+
+  SetDispMask(0);
+  g_DB[0].m_DispEnv.isrgb24 = 0;
+  g_DB[1].m_DispEnv.isrgb24 = 0;
+  PutDispEnv(&g_DB[1].m_DispEnv);
+  ClearFramebuffers();
+  SetDispMask(1);
+
+  D_80075754 = 10;
+  g_Spu.unk_0x320 = 0x3FFF;
+  D_80075748 = 10;
+  g_Spu.m_MusicVolume = 0x5000;
+  g_Spu.m_CommonAttr.cd.volume.left = g_Spu.m_MusicVolume;
+  g_Spu.m_CommonAttr.cd.volume.right = g_Spu.m_MusicVolume;
+  g_Spu.m_CommonAttr.mask = SPU_COMMON_CDVOLL | SPU_COMMON_CDVOLR;
+  SpuSetCommonAttr(&g_Spu.m_CommonAttr);
+  g_SkipLowPolyWorld = 0;
+  func_8001277C();
+  g_DeltaTime = 2;
+  g_UnprocessedFrames = 0;
+  g_Environment.m_LodDistance = 0x8000;
+  g_TitlescreenState.m_Mode = TSM_Demo;
+  g_TitlescreenState.m_State = TSS_Setup;
+  g_Gamestate = GS_TitleScreen;
+#endif
 }

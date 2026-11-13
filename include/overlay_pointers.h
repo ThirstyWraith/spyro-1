@@ -14,6 +14,7 @@
 extern Moby *(*g_SpawnMoby)(int pClass, Moby *pParent);
 extern void (*g_UpdateMoby)();
 
+extern int (*g_FlightTextLen)(u_char *text);
 extern void (*g_FlightResultsUpdate)();
 extern void (*D_8007567C)(); // g_DrawGameState7
 
@@ -80,6 +81,7 @@ extern int (*D_800758C4)(int pTimer, Vector3D *pPos, int pColor); // g_DrawTime
 
 // Flight funcs are generically named for now, here and in overlay_pointers.c
 #define f(level) \
+    int NAME_OVERLAY_FUNCTION_LEVEL(FlightTextLen, level)(u_char *text); \
     void NAME_OVERLAY_FUNCTION_LEVEL(Flight1, level)(void); \
     void NAME_OVERLAY_FUNCTION_LEVEL(Flight2, level)(int pUnk); \
     void NAME_OVERLAY_FUNCTION_LEVEL(Flight3, level)(void); \

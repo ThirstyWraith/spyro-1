@@ -5,6 +5,11 @@
 #include "hud.h"
 #include "moby.h"
 
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+void ClearFramebuffers(void);
+void FadeStartupImage(void *src, u_long *imageBuffer, int bfadeIn);
+#endif
+
 /// @brief Create text Mobys, no capitalization
 Moby *func_80017FE4(char *pText, Vector3D *pPosition, int pSpaceWidth,
                     int pShadeIndex);

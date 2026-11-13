@@ -146,6 +146,11 @@ dlabel D_80075720
 dlabel D_80075724
 /* 65EFC 80075724 */ .space 0x04
 
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+dlabel BUILD_C3_DEMO_8006F738
+.space 0x04
+.endif
+
 dlabel D_80075728
 /* 65F00 80075728 */ .space 0x04
 
@@ -291,6 +296,11 @@ dlabel D_800757E4
 dlabel g_PreviousLevelId
 /* 65FC0 800757E8 */ .space 0x04
 
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+dlabel g_FlightTextLen
+.space 0x04
+.endif
+
 dlabel D_800757EC
 /* 65FC4 800757EC */ .space 0x04
 
@@ -396,11 +406,18 @@ dlabel D_80075874
 dlabel g_CreditsDisplayedCount
 /* 66050 80075878 */ .space 0x04
 
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+dlabel BUILD_C3_DEMO_8006F894
+.space 0x04
+.endif
+
 dlabel D_8007587C
 /* 66054 8007587C */ .space 0x04
 
+.if GAME_VER == VER_NTSC_U
 dlabel g_LevelCheatActive
 /* 66058 80075880 */ .space 0x04
+.endif
 
 dlabel g_DemoFadeTimer
 /* 6605C 80075884 */ .space 0x04
@@ -492,11 +509,13 @@ dlabel g_SpawnParticle
 dlabel g_LifeOrbCount
 /* 660C0 800758E8 */ .space 0x04
 
+.if GAME_VER == VER_NTSC_U
 dlabel cheat_HomeworldSelected
 /* 660C4 800758EC */ .space 0x04
 
 dlabel cheat_LevelSelected
 /* 660C8 800758F0 */ .space 0x04
+.endif
 
 dlabel D_800758F4
 /* 660CC 800758F4 */ .space 0x04
@@ -534,8 +553,10 @@ dlabel g_SkipLowPolyWorld
 dlabel D_80075924
 /* 660FC 80075924 */ .space 0x04
 
+.if GAME_VER == VER_NTSC_U
 dlabel cheat_InputCounter
 /* 66100 80075928 */ .space 0x04
+.endif
 
 dlabel D_8007592C
 /* 66104 8007592C */ .space 0x04
@@ -559,7 +580,11 @@ dlabel g_PadSwapFlag
 /* 6611C 80075944 */ .space 0x04
 
 dlabel D_80075948
+.if GAME_VER == VER_C3_DEMO_NTSC_U
+.space 0x04
+.else
 /* 66120 80075948 */ .space 0x08
+.endif
 
 dlabel D_80075950
 /* 66128 80075950 */ .space 0x08

@@ -145,7 +145,11 @@ void func_80050BD0(void) {
 
     // SKELETON: Typo lol?
     minX = 5112;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    minY = 256;
+#else
     minY = 240;
+#endif
     maxX = 0;
     maxY = 0;
     visible = 0;

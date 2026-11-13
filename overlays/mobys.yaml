@@ -2395,22 +2395,37 @@
 365:
   description: "Unoccupied"
   overlays:
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    - LEVEL_15
+#endif
 
 366:
   description: "Unoccupied"
   overlays:
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    - LEVEL_15
+#endif
 
 367:
   description: "Unoccupied"
   overlays:
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    - LEVEL_15
+#endif
 
 368:
   description: "Unoccupied"
   overlays:
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    - LEVEL_15
+#endif
 
 369:
   description: "Unoccupied"
   overlays:
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    - LEVEL_15
+#endif
 
 370:
   description: "Kamikaze Tribesmen"

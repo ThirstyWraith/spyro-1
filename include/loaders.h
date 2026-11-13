@@ -4,6 +4,7 @@
 #include <sys/types.h>
 
 #include "moby.h"
+#include "versions.h"
 
 extern int g_PortalLevelId; // Portal level id
 extern int g_LoadStage;     // Load stage
@@ -11,17 +12,24 @@ extern int g_LoadStage;     // Load stage
 /// @brief Flag indicating active level transition (1 = transitioning, 0 = not)
 extern int g_HasLevelTransition;
 
+// TODO:
 typedef struct {
   short xOffset;
   short yOffset;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  short _04;
+#else
   short targetX;
   short targetY;
-  u_char _08;
+#endif
+  u_char active;
   u_char age;
   Vector3D8 rot;
+#if GAME_VER == VER_NTSC_U
   u_char _0D;
   u_char _0E;
-  u_char _0F;
+#endif
+  u_char rotationStepZ;
 } TransGem;
 
 extern int g_LevelTransHudActive;     // Show transition text D_800756B0

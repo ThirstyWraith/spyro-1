@@ -11,6 +11,7 @@
 #include <libpad.h>
 #include <stdio.h>
 
+#if GAME_VER == VER_NTSC_U
 // Resets a bunch of PSYQ stuff
 void func_8002BA68(void) {
   SetDispMask(0);
@@ -39,3 +40,4 @@ void CrashDemoLaunch(void) {
            0                          // Number of bytes in stack area
   );
 }
+#endif

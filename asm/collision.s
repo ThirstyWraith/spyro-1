@@ -3540,6 +3540,13 @@ glabel func_8004DF24
 /* 3EA50 8004E250 7EFF0106 */  bgez       $s0, .L8004E04C
 /* 3EA54 8004E254 00000000 */   nop
 /* 3EA58 8004E258 00003621 */  addi       $s6, $t1, 0x0 /* handwritten instruction */
+.if GAME_VER>=VER_C3_DEMO_NTSC_U
+                               lui        $at, %hi(g_CollisionNormal)
+                               addiu      $at, $at, %lo(g_CollisionNormal)
+                               sw         $t5, 0x0($at)
+                               sw         $t6, 0x4($at)
+                               sw         $t7, 0x8($at)
+.endif
 /* 3EA5C 8004E25C 0880013C */  lui        $at, %hi(g_Environment)
 /* 3EA60 8004E260 A8852124 */  addiu      $at, $at, %lo(g_Environment)
 /* 3EA64 8004E264 2C00218C */  lw         $at, 0x2C($at)
@@ -3794,7 +3801,9 @@ glabel D_8004E5B8
 /* 3EDE8 8004E5E8 22582A01 */  sub        $t3, $t1, $t2 /* handwritten instruction */
 /* 3EDEC 8004E5EC E8FF6105 */  bgez       $t3, .L8004E590
 /* 3EDF0 8004E5F0 04002120 */   addi      $at, $at, 0x4 /* handwritten instruction */
-/* 3EDF4 8004E5F4 0000D223 */  addi       $s2, $fp, 0x0 /* handwritten instruction */
+.if GAME_VER == VER_NTSC_U
+/* 3EDF4 8004E5F4 0000D223 */  addi       $s2, $fp, 0x0
+.endif
 /* 3EDF8 8004E5F8 04004F30 */  andi       $t7, $v0, 0x4
 /* 3EDFC 8004E5FC 0500E015 */  bnez       $t7, .L8004E614
 /* 3EE00 8004E600 00000000 */   nop
@@ -3814,6 +3823,9 @@ glabel D_8004E5B8
 /* 3EE30 8004E630 02004F30 */  andi       $t7, $v0, 0x2
 /* 3EE34 8004E634 D6FFE015 */  bnez       $t7, .L8004E590
 /* 3EE38 8004E638 00000000 */   nop
+.if GAME_VER >= VER_C3_DEMO_NTSC_U
+                               addi       $s2, $fp, 0x0
+.endif
 /* 3EE3C 8004E63C 01006F32 */  andi       $t7, $s3, 0x1
 /* 3EE40 8004E640 0400E011 */  beqz       $t7, .L8004E654
 /* 3EE44 8004E644 00000000 */   nop
@@ -3841,7 +3853,9 @@ glabel D_8004E5B8
 /* 3EE94 8004E694 22688A01 */  sub        $t5, $t4, $t2 /* handwritten instruction */
 /* 3EE98 8004E698 BDFFA105 */  bgez       $t5, .L8004E590
 /* 3EE9C 8004E69C 08002120 */   addi      $at, $at, 0x8 /* handwritten instruction */
+.if GAME_VER == VER_NTSC_U
 /* 3EEA0 8004E6A0 0000D223 */  addi       $s2, $fp, 0x0 /* handwritten instruction */
+.endif
 /* 3EEA4 8004E6A4 04004F30 */  andi       $t7, $v0, 0x4
 /* 3EEA8 8004E6A8 0500E015 */  bnez       $t7, .L8004E6C0
 /* 3EEAC 8004E6AC 00000000 */   nop
@@ -3861,6 +3875,9 @@ glabel D_8004E5B8
 /* 3EEDC 8004E6DC 02004F30 */  andi       $t7, $v0, 0x2
 /* 3EEE0 8004E6E0 ABFFE015 */  bnez       $t7, .L8004E590
 /* 3EEE4 8004E6E4 00000000 */   nop
+.if GAME_VER >= VER_C3_DEMO_NTSC_U
+                               addi       $s2, $s8, 0x0
+.endif
 /* 3EEE8 8004E6E8 01006F32 */  andi       $t7, $s3, 0x1
 /* 3EEEC 8004E6EC 0500E011 */  beqz       $t7, .L8004E704
 /* 3EEF0 8004E6F0 00000000 */   nop
@@ -3913,9 +3930,14 @@ glabel D_8004E5B8
 /* 3EFA0 8004E7A0 7BFFA105 */  bgez       $t5, .L8004E590
 /* 3EFA4 8004E7A4 00000000 */   nop
 /* 3EFA8 8004E7A8 EF390108 */  j          .L8004E7BC
+.if GAME_VER == VER_NTSC_U
 /* 3EFAC 8004E7AC 0000D223 */   addi      $s2, $fp, 0x0 /* handwritten instruction */
 .L8004E7B0:
 /* 3EFB0 8004E7B0 0000D223 */  addi       $s2, $fp, 0x0 /* handwritten instruction */
+.else
+                               nop
+.L8004E7B0:
+.endif
 /* 3EFB4 8004E7B4 00000B20 */  addi       $t3, $zero, 0x0 /* handwritten instruction */
 /* 3EFB8 8004E7B8 2060C700 */  add        $t4, $a2, $a3 /* handwritten instruction */
 .L8004E7BC:
@@ -3938,6 +3960,9 @@ glabel D_8004E5B8
 /* 3EFF4 8004E7F4 02004F30 */  andi       $t7, $v0, 0x2
 /* 3EFF8 8004E7F8 65FFE015 */  bnez       $t7, .L8004E590
 /* 3EFFC 8004E7FC 00000000 */   nop
+.if GAME_VER >= VER_C3_DEMO_NTSC_U
+                               addi       $s2, $s8, 0x0
+.endif
 /* 3F000 8004E800 01006F32 */  andi       $t7, $s3, 0x1
 /* 3F004 8004E804 0500E011 */  beqz       $t7, .L8004E81C
 /* 3F008 8004E808 00000000 */   nop
@@ -4026,7 +4051,9 @@ glabel D_8004E5B8
 /* 3F14C 8004E94C 22786A01 */  sub        $t7, $t3, $t2 /* handwritten instruction */
 /* 3F150 8004E950 0FFFE105 */  bgez       $t7, .L8004E590
 /* 3F154 8004E954 08002120 */   addi      $at, $at, 0x8 /* handwritten instruction */
+.if GAME_VER == VER_NTSC_U
 /* 3F158 8004E958 0000D223 */  addi       $s2, $fp, 0x0 /* handwritten instruction */
+.endif
 /* 3F15C 8004E95C 04004F30 */  andi       $t7, $v0, 0x4
 /* 3F160 8004E960 0500E015 */  bnez       $t7, .L8004E978
 /* 3F164 8004E964 00000000 */   nop
@@ -4046,6 +4073,9 @@ glabel D_8004E5B8
 /* 3F194 8004E994 02004F30 */  andi       $t7, $v0, 0x2
 /* 3F198 8004E998 FDFEE015 */  bnez       $t7, .L8004E590
 /* 3F19C 8004E99C 00000000 */   nop
+.if GAME_VER >= VER_C3_DEMO_NTSC_U
+                               addi       $s2, $s8, 0x0
+.endif
 /* 3F1A0 8004E9A0 01006F32 */  andi       $t7, $s3, 0x1
 /* 3F1A4 8004E9A4 0700E011 */  beqz       $t7, .L8004E9C4
 /* 3F1A8 8004E9A8 00000000 */   nop

@@ -1,7 +1,7 @@
 import yaml
 import sys
 
-with open("overlays/mobys.yaml", "r") as f:
+with sys.stdin as f:
     overlay_name = sys.argv[1]
     particles = yaml.safe_load(f)
 

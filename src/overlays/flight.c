@@ -19,6 +19,7 @@
 #include "specular_and_metal.h"
 #include "spu.h"
 #include "spyro.h"
+#include "strings.h"
 #include "variables.h"
 
 #include <libetc.h>
@@ -27,6 +28,22 @@
 
 extern unsigned int strlen(char *);
 extern char *strcpy(char *, const char *);
+
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+
+int NAME_OVERLAY_FUNCTION(FlightTextLen)(u_char *text) {
+  int i;
+  int count = 0;
+
+  for (i = 0; text[i] != 0; i++) {
+    // Accents
+    if (!(text[i] >= 'a' && text[i] <= 'f')) {
+      count++;
+    }
+  }
+  return count;
+}
+#endif
 
 // Used in the pause menu as well
 extern int D_80075720; // Selected menu item index
@@ -104,9 +121,13 @@ void NAME_OVERLAY_FUNCTION(Flight2)(int pUnk) {
     g_RecentGemsCollected[i & 31] = D_8006E998[i % 12];
   }
   g_Spyro.m_walkingState = 0;
+#if GAME_VER == VER_NTSC_U
   if (g_Camera.m_State == 0x8000000E) {
     g_Camera.unk_0xC0 = D_8006C588[g_Spyro.m_State];
   }
+#else
+  g_Camera.unk_0xC0 = D_8006C588[g_Spyro.m_State];
+#endif
 }
 
 void NAME_OVERLAY_FUNCTION(Flight3)(void) {
@@ -148,10 +169,18 @@ void NAME_OVERLAY_FUNCTION(Flight3)(void) {
         switch (D_80075720) {
         case 0:
           (*D_800757A8)(1);
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+          VecNull(&g_Spyro.m_HeadLookTarget);
+          g_Camera.m_SphericalPreset = &D_8006C934;
+          func_80034358();
+#endif
           func_800144C8();
           break;
         case 1:
           (*D_800757A8)(0);
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+          VecNull(&g_Spyro.m_HeadLookTarget);
+#endif
           func_8002C618();
           break;
         }
@@ -178,7 +207,11 @@ int NAME_OVERLAY_FUNCTION(Flight4)(int pTimer, Vector3D *pPos, int pColor) {
   if (pTimer < 0) {
     pPos->x -= 54;
     pPos->y -= 5;
+    #if GAME_VER == VER_NTSC_U
     func_80017FE4("......", pPos, 18, pColor);
+    #else
+    func_800181AC("......", pPos, 0, 18, pColor);
+    #endif
     return 6;
   } else {
     mins = pTimer / 36000;
@@ -191,15 +224,27 @@ int NAME_OVERLAY_FUNCTION(Flight4)(int pTimer, Vector3D *pPos, int pColor) {
     }
     len = strlen(text);
     pPos->x -= len * 9;
+    #if GAME_VER == VER_NTSC_U
     func_80017FE4(text, pPos, 18, pColor);
+    #else
+    func_800181AC(text, pPos, 0, 18, pColor);
+    #endif
     if (mins != 0) {
       pPos->x -= 108;
       pPos->y += 1;
       pPos->z = pPos->z * 3 >> 1;
+      #if GAME_VER == VER_NTSC_U
       func_80017FE4(".", pPos, 18, pColor);
+      #else
+      func_800181AC(".", pPos, 0, 18, pColor);
+      #endif
       pPos->x -= 18;
       pPos->y -= 8;
+      #if GAME_VER == VER_NTSC_U
       func_80017FE4(".", pPos, 18, pColor);
+      #else
+      func_800181AC(".", pPos, 0, 18, pColor);
+      #endif
       len++;
     }
     return len;
@@ -291,17 +336,46 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       if (g_FlightObjectiveCounters[0] + g_FlightObjectiveCounters[1] +
               g_FlightObjectiveCounters[2] + g_FlightObjectiveCounters[3] ==
           32) {
+
+#if GAME_VER == VER_NTSC_U
         strcpy(text, "COMPLETED");
         isCompleted = 1;
+#else
+        isCompleted = 1;
+        strcpy(text, StringCompleted);
+#endif
       } else if (D_80075900 != 0) {
+
+#if GAME_VER == VER_NTSC_U
         strcpy(text, "QUIT");
+#else
+        strcpy(text, StringQuit_Flight);
+#endif
       } else if (D_80075908 < 0) {
+
+#if GAME_VER == VER_NTSC_U
         strcpy(text, "TIME IS UP");
+#else
+        strcpy(text, StringTimeIsUp);
+#endif
       } else {
+
+#if GAME_VER == VER_NTSC_U
         strcpy(text, "CRASHED");
+#else
+        strcpy(text, StringCrashed);
+#endif
       }
+#if GAME_VER == VER_NTSC_U
       setXYZ(&vec, 268 - strlen(text) * 12, 30, 0xC00);
+#else
+      setXYZ(&vec, 268 - g_FlightTextLen((u_char *)text) * 12, 30, 0xC00);
+#endif
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(text, &vec, 24, 11);
+#else
+      func_800181AC(text, &vec, 0, 24, 11);
+#endif
       Memset(--g_HudMobys, 0, 88);
       g_HudMobys->m_Class = 471;
       g_HudMobys->m_Position.x = 460;
@@ -315,11 +389,19 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       func_8001844C(60, 46, 452, 46);
 
       setXYZ(&vec, 100, 60, 0x1100);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(D_8006E8C0[g_Homeworld][0], &vec, 18, 11);
+#else
+      func_800181AC(D_8006E8C0[g_Homeworld][0], &vec, 0, 18, 11);
+#endif
       if (D_80075744 > 0) {
         sprintf(text, "%d/8", g_FlightObjectiveCounters[0]);
         setXYZ(&vec, 320, 60, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
       }
       if (D_80075744 >= 2) {
         if (g_FlightObjectiveCounters[0] == 8) {
@@ -335,7 +417,11 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
           sfx_idx = 33;
         }
         setXYZ(&vec, 480 - (strlen(text) * 18), 60, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
         if (D_8007569C < 2) {
           PlaySound(((char *)g_Spu.m_SoundTable)[sfx_idx],
                     (Moby *)&g_Spyro.m_Position, 0x10, 0);
@@ -344,11 +430,19 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       }
 
       setXYZ(&vec, 100, 80, 0x1100);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(D_8006E8C0[g_Homeworld][1], &vec, 18, 11);
+#else
+      func_800181AC(D_8006E8C0[g_Homeworld][1], &vec, 0, 18, 11);
+#endif
       if (D_80075744 >= 3) {
         sprintf(text, "%d/8", g_FlightObjectiveCounters[1]);
         setXYZ(&vec, 320, 80, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
       }
       if (D_80075744 >= 4) {
         if (g_FlightObjectiveCounters[1] == 8) {
@@ -364,7 +458,11 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
           sfx_idx = 33;
         }
         setXYZ(&vec, 480 - (strlen(text) * 18), 80, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
         if (D_8007569C < 4) {
           PlaySound(((char *)g_Spu.m_SoundTable)[sfx_idx],
                     (Moby *)&g_Spyro.m_Position, 0x10, 0);
@@ -373,11 +471,19 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       }
 
       setXYZ(&vec, 100, 100, 0x1100);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(D_8006E8C0[g_Homeworld][2], &vec, 18, 11);
+#else
+      func_800181AC(D_8006E8C0[g_Homeworld][2], &vec, 0, 18, 11);
+#endif
       if (D_80075744 >= 5) {
         sprintf(text, "%d/8", g_FlightObjectiveCounters[2]);
         setXYZ(&vec, 320, 100, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
       }
       if (D_80075744 >= 6) {
         if (g_FlightObjectiveCounters[2] == 8) {
@@ -393,7 +499,11 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
           sfx_idx = 33;
         }
         setXYZ(&vec, 480 - (strlen(text) * 18), 100, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
         if (D_8007569C < 6) {
           PlaySound(((char *)g_Spu.m_SoundTable)[sfx_idx],
                     (Moby *)&g_Spyro.m_Position, 0x10, 0);
@@ -402,11 +512,19 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       }
 
       setXYZ(&vec, 100, 120, 0x1100);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(D_8006E8C0[g_Homeworld][3], &vec, 18, 11);
+#else
+      func_800181AC(D_8006E8C0[g_Homeworld][3], &vec, 0, 18, 11);
+#endif
       if (D_80075744 >= 7) {
         sprintf(text, "%d/8", g_FlightObjectiveCounters[3]);
         setXYZ(&vec, 320, 120, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
       }
       if (D_80075744 >= 8) {
         if (g_FlightObjectiveCounters[3] == 8) {
@@ -422,7 +540,11 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
           sfx_idx = 33;
         }
         setXYZ(&vec, 480 - (strlen(text) * 18), 120, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
         if (D_8007569C < 8) {
           PlaySound(((char *)g_Spu.m_SoundTable)[sfx_idx],
                     (Moby *)&g_Spyro.m_Position, 0x10, 0);
@@ -431,7 +553,11 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       }
 
       setXYZ(&vec, 100, 140, 0x1100);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4("ALL IN ONE", &vec, 18, 11);
+#else
+      func_800181AC(StringAllInOne, &vec, 0, 18, 11);
+#endif
       if (D_80075744 >= 9) {
         if (g_FlightObjectiveCounters[0] + g_FlightObjectiveCounters[1] +
                 g_FlightObjectiveCounters[2] + g_FlightObjectiveCounters[3] ==
@@ -448,7 +574,11 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
           sfx_idx = 33;
         }
         setXYZ(&vec, 480 - (strlen(text) * 18), 140, 0x1100);
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 18, 11);
+#else
+        func_800181AC(text, &vec, 0, 18, 11);
+#endif
         if (D_8007569C < 9) {
           PlaySound(((char *)g_Spu.m_SoundTable)[sfx_idx],
                     (Moby *)&g_Spyro.m_Position, 0x10, 0);
@@ -457,31 +587,85 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       }
       func_8001844C(416, 150, 470, 150);
       setXYZ(&vec, 100, 160, 0x1100);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4("TOTAL", &vec, 18, 11);
+#else
+      func_800181AC(StringTotal, &vec, 0, 18, 11);
+#endif
       sprintf(text, "%d", earnedGems);
       setXYZ(&vec, 480 - (strlen(text) * 18), 160, 0x1100);
+#if GAME_VER == VER_NTSC_U
       func_80017FE4(text, &vec, 18, 11);
+#else
+      func_800181AC(text, &vec, 0, 18, 11);
+#endif
       func_8001844C(60, 176, 452, 176);
       if (D_80075744 >= 9) {
         if ((isCompleted != 0) || (g_FlightCourseRecords[g_Homeworld] != 0)) {
+#if GAME_VER == VER_NTSC_U
           setXYZ(&vec, 80, 210, 0x1100);
           func_80017FE4("PRESS   TO CONTINUE", &vec, 18, 11);
           vec.x = 188;
           func_80017FE4("X", &vec, 18, 10);
+#else
+          strcpy(text, StringPressButton);
+          setXYZ(&vec, 256 - (g_FlightTextLen((u_char *)text) - 1) * 9, 210, 0x1100);
+          func_800181AC(text, &vec, 0, 18, 11);
+          vec.x = StringPressButton_ButtonIndex * 18 -
+                  (g_FlightTextLen((u_char *)text) - 1) * 9 + 247;
+          func_800181AC("X", &vec, 0, 18, 10);
+#endif
         } else {
+#if GAME_VER == VER_NTSC_U
           setXYZ(&vec, 140, 190, 0x1100);
           func_80017FE4("TRY AGAIN?", &vec, 18, 11);
+#else
+          strcpy(text, StringTryAgain);
+          setXYZ(&vec, 366 - (g_FlightTextLen((u_char *)text) + 1) * 18, 190,
+                 0x1100);
+          func_800181AC(text, &vec, 0, 18, 11);
+#endif
+
+#if GAME_VER == VER_NTSC_U
           setXYZ(&vec, 348, 190, 0x1100);
+#else
+          setXYZ(&vec, 366, 190, 0x1100);
+#endif
+#if GAME_VER == VER_NTSC_U
           func_80017FE4("YES", &vec, 18,
                         (D_80075720 == 0 && D_8007568C % 16 < 6) * 2 + 10);
+#else
+          func_800181AC(StringYes_Flight, &vec, 0, 18,
+                        (D_80075720 == 0 && D_8007568C % 16 < 6) * 2 + 10);
+#endif
           mobys = g_HudMobys;
+
+#if GAME_VER == VER_NTSC_U
           mobyCount = 3;
+#else
+          mobyCount = strlen(StringYes_Flight);
+#endif
+
+#if GAME_VER == VER_NTSC_U
           setXYZ(&vec, 348, 210, 0x1100);
+#else
+          setXYZ(&vec, 366, 210, 0x1100);
+#endif
+#if GAME_VER == VER_NTSC_U
           func_80017FE4("NO", &vec, 18,
                         (D_80075720 == 1 && D_8007568C % 16 < 6) * 2 + 10);
+#else
+          func_800181AC(StringNo_Flight, &vec, 0, 18,
+                        (D_80075720 == 1 && D_8007568C % 16 < 6) * 2 + 10);
+#endif
           if (D_80075720 != 0) {
             mobys = g_HudMobys;
+
+#if GAME_VER == VER_NTSC_U
             mobyCount = 2;
+#else
+            mobyCount = strlen(StringNo_Flight);
+#endif
           }
           for (i = 0; i < mobyCount; i++) {
             mobys->m_Rotation.z =
@@ -497,15 +681,33 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
       *mobyBuf = nullptr;
 
     } else {
+#if GAME_VER == VER_NTSC_U
       setXYZ(&vec, 136, 40, 0xC00);
       func_80017FE4("TIME ATTACK", &vec, 24, 11);
+#else
+      strcpy(text, StringTimeAttack);
+      setXYZ(&vec, 256 - (g_FlightTextLen((u_char *)text) - 1) * 12, 40, 0xC00);
+      func_800181AC(text, &vec, 0, 24, 11);
+#endif
       func_8001844C(60, 61, 452, 61);
+#if GAME_VER == VER_NTSC_U
       setXYZ(&vec, 320, 80, 0x1100);
       func_80017FE4("BEST TIME", &vec, 18, 11);
+#else
+      strcpy(text, StringBestTime);
+      setXYZ(&vec, 392 - (g_FlightTextLen((u_char *)text) - 1) * 9, 80, 0x1100);
+      func_800181AC(text, &vec, 0, 18, 11);
+#endif
       setXYZ(&vec, 401, 100, 0x1100);
       D_800758C4(g_FlightCourseRecords[g_Homeworld], &vec, 11);
+#if GAME_VER == VER_NTSC_U
       setXYZ(&vec, 56, 80, 0x1100);
       func_80017FE4("YOUR TIME", &vec, 18, 11);
+#else
+      strcpy(text, StringYourTime);
+      setXYZ(&vec, 128 - (g_FlightTextLen((u_char *)text) - 1) * 9, 80, 0x1100);
+      func_800181AC(text, &vec, 0, 18, 11);
+#endif
       setXYZ(&vec, 137, 100, 0x1100);
       if (g_FlightCourseRecords[g_Homeworld] >= D_800758F4) {
         // strange var to use, needed for correct register usage
@@ -530,13 +732,31 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
               g_FlightObjectiveCounters[2] + g_FlightObjectiveCounters[3] <
           32) {
         if (D_80075900 != 0) {
+
+#if GAME_VER == VER_NTSC_U
           strcpy(text, "QUIT");
+#else
+          strcpy(text, StringQuit_Flight);
+#endif
         } else {
+
+#if GAME_VER == VER_NTSC_U
           strcpy(text, "CRASHED");
+#else
+          strcpy(text, StringCrashed);
+#endif
         }
         mobyCount = strlen(text);
+#if GAME_VER == VER_NTSC_U
         setXYZ(&vec, 268 - mobyCount * 12, 150, 0xC00);
+#else
+        setXYZ(&vec, 268 - g_FlightTextLen((u_char *)text) * 12, 150, 0xC00);
+#endif
+#if GAME_VER == VER_NTSC_U
         func_80017FE4(text, &vec, 24, 11);
+#else
+        func_800181AC(text, &vec, 0, 24, 11);
+#endif
         mobys = g_HudMobys;
         for (i = 0; i < mobyCount; i++) {
           mobys->m_Rotation.z =
@@ -545,8 +765,14 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
         }
 
       } else if (g_FlightCourseRecords[g_Homeworld] >= D_800758F4) {
+#if GAME_VER == VER_NTSC_U
         setXYZ(&vec, 148, 150, 0xC00);
         func_80017FE4("NEW RECORD", &vec, 24, 8);
+#else
+        strcpy(text, StringNewRecord);
+        setXYZ(&vec, 256 - (g_FlightTextLen((u_char *)text) - 1) * 12, 150, 0xC00);
+        func_800181AC(text, &vec, 0, 24, 8);
+#endif
 
         mobys = g_HudMobys;
         mobyCount = 10;
@@ -557,21 +783,53 @@ void NAME_OVERLAY_FUNCTION(Flight5)(void) {
         }
       }
       func_8001844C(60, 171, 452, 171);
+#if GAME_VER == VER_NTSC_U
       setXYZ(&vec, 140, 190, 0x1100);
 
       func_80017FE4("TRY AGAIN", &vec, 18, 11);
+#else
+      strcpy(text, StringTryAgain);
+      setXYZ(&vec, 366 - (g_FlightTextLen((u_char *)text) + 1) * 18, 190, 0x1100);
+      func_800181AC(text, &vec, 0, 18, 11);
+#endif
 
+#if GAME_VER == VER_NTSC_U
       setXYZ(&vec, 340, 190, 0x1100);
+#else
+      setXYZ(&vec, 366, 190, 0x1100);
+#endif
+#if GAME_VER == VER_NTSC_U
       func_80017FE4("YES", &vec, 18,
                     (D_80075720 == 0 && D_8007568C % 16 < 6) * 2 + 10);
+#else
+      func_800181AC(StringYes_Flight, &vec, 0, 18,
+                    (D_80075720 == 0 && D_8007568C % 16 < 6) * 2 + 10);
+#endif
+
+#if GAME_VER == VER_NTSC_U
       setXYZ(&vec, 340, 210, 0x1100);
       mobyCount = 3;
       mobys = g_HudMobys;
+#else
+      mobys = g_HudMobys;
+      mobyCount = strlen(StringYes_Flight);
+      setXYZ(&vec, 366, 210, 0x1100);
+#endif
+#if GAME_VER == VER_NTSC_U
       func_80017FE4("NO", &vec, 18,
                     (D_80075720 == 1 && D_8007568C % 16 < 6) * 2 + 10);
+#else
+      func_800181AC(StringNo_Flight, &vec, 0, 18,
+                    (D_80075720 == 1 && D_8007568C % 16 < 6) * 2 + 10);
+#endif
       if (D_80075720 != 0) {
         mobys = g_HudMobys;
+
+#if GAME_VER == VER_NTSC_U
         mobyCount = 2;
+#else
+        mobyCount = strlen(StringNo_Flight);
+#endif
       }
       for (i = 0; i < mobyCount; i++) {
         mobys->m_Rotation.z =

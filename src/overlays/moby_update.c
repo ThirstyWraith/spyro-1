@@ -1754,6 +1754,11 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
         continue;
       }
       case 30: {
+#if GAME_VER == VER_NTSC_U
+        const int nodeRadius = 0x100;
+#else
+        const int nodeRadius = 0x200;
+#endif
         int angle;
         int angle2;
         int distance;
@@ -1766,6 +1771,11 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
         int spyroAngle;
         int i;
         speed = 0xCD;
+        #if GAME_VER >= VER_C3_DEMO_NTSC_U
+        if (g_LevelId == 20) {
+          speed = 0xC3;
+        }
+        #endif
         MOBY_ANIM_CHANGE_CLEAR_FINISHED(moby, 1);
         if (PATH_CUR_NODE(props->m_0x00).unk_0xC > 0) {
           speed = PATH_CUR_NODE(props->m_0x00).unk_0xC;
@@ -1787,25 +1797,49 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
         distance = OctDistance(&moby->m_Position, &PATH_CUR_POS(props->m_0x00));
         nextDistance = OctDistance(&moby->m_Position,
                                    &PATH_NODE_POS(props->m_0x00, nextNode));
-        if (distance >= 0x191 && nextDistance >= 0x191) {
+        if (
+          #if GAME_VER >= VER_C3_DEMO_NTSC_U
+          props->m_0x30 == 0 ||
+          #endif
+          (distance >= 0x191 && nextDistance >= 0x191)
+        ) {
           angle = ANGLE_FROM(moby->m_Position, PATH_CUR_POS(props->m_0x00));
           angle2 = ANGLE_FROM(moby->m_Position,
                               PATH_NODE_POS(props->m_0x00, nextNode));
           spyroAngle = ANGLE_TO_SPYRO(moby->m_Position);
           currentDiff = func_80017908(angle, spyroAngle);
           nextDiff = func_80017908(angle2, spyroAngle);
-          if (props->m_0x30 == 0 && ABS2(currentDiff - nextDiff) < 0x28) {
+          if (
+            props->m_0x30 == 0 &&
+            #if GAME_VER == VER_NTSC_U
+            ABS2(currentDiff - nextDiff) < 0x28
+            #else
+            ABS2(currentDiff - nextDiff) >= 0x1F && currentDiff < nextDiff
+            #endif
+          ) {
             props->m_0x30 = 1;
             props->m_0x00->m_Reversed = -props->m_0x00->m_Reversed;
-          } else if (currentDiff < nextDiff &&
-                     ABS2(currentDiff - nextDiff) >= 0x1D && nextDiff >= 0x3D &&
-                     func_80017908(moby->m_Rotation.z,
-                                   ANGLE_TO_SPYRO(moby->m_Position)) < 0x3C) {
+            #if GAME_VER >= VER_C3_DEMO_NTSC_U
+            props->m_0x00->m_CurrentNode = nextNode;
+            #endif
+          } else if (
+            #if GAME_VER >= VER_C3_DEMO_NTSC_U
+            props->m_0x30 != 0 &&
+            #endif
+            currentDiff < nextDiff &&
+            ABS2(currentDiff - nextDiff) >= 0x1D &&
+            #if GAME_VER >= VER_C3_DEMO_NTSC_U
+            currentDiff < 0x1E &&
+            #endif
+            nextDiff >= 0x3D &&
+            func_80017908(moby->m_Rotation.z,
+                          ANGLE_TO_SPYRO(moby->m_Position)) < 0x3C
+          ) {
             props->m_0x00->m_Reversed = -props->m_0x00->m_Reversed;
             props->m_0x00->m_CurrentNode = nextNode;
           }
         }
-        result = func_80039E94(moby, props->m_0x00, 0x100, props->m_0x14, 0, 8,
+        result = func_80039E94(moby, props->m_0x00, nodeRadius, props->m_0x14, 0, 8,
                                0x1E, 0xFF, 5);
         if ((result & 0x100) != 0) {
           i = (props->m_0x28 - props->m_0x00->m_Reversed) %
@@ -7202,6 +7236,11 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
         Vector3D collectableMovePos;
         Vector3D collectableSurfaceNormal;
         int speed;
+        #if GAME_VER == VER_NTSC_U
+        const int max_fall_speed = -220;
+        #else
+        const int max_fall_speed = -224;
+        #endif
 
         VecMult(&collectableMovePos, &collectableProps->m_InitPos, g_DeltaTime);
         VecShiftRight(&collectableMovePos, 1);
@@ -7215,7 +7254,7 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
         VecAdd(&collectableMovePos, &moby->m_Position, &collectableMovePos);
 
         // Apply gravity
-        if (-220 < collectableProps->m_InitPos.z) {
+        if (max_fall_speed < collectableProps->m_InitPos.z) {
           collectableProps->m_InitPos.z -= g_DeltaTime * 5;
         }
 
@@ -8526,6 +8565,9 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
           props->m_0x0c =
               AngleLerpClamped(ANGLE_FROM_SPYRO(moby->m_Position),
                                g_Spyro.m_BodyRotation.z, 0x28, 0x80);
+          #if GAME_VER >= VER_C3_DEMO_NTSC_U
+          moby->m_CollisionRange = 1;
+          #endif
           moby->m_State = 8;
           MOBY_ANIM_CHANGE(moby, 8);
           continue;
@@ -15434,7 +15476,7 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
         func_8003DFA4();
         VecNull(&g_Spyro.m_HeadLookTarget);
         g_BalloonistEnter(moby);
-
+#if GAME_VER == VER_NTSC_U
         if (g_DragonTotal < 10) {
           if (D_800758D0[1] == 0) {
             g_Balloonist.m_DialogueId = 0;
@@ -15453,6 +15495,9 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
           g_Balloonist.m_DialogueId = 30;
           g_Balloonist.m_DialogueTopStr = rand() % 3;
         }
+#else
+        g_Balloonist.m_DialogueId = 0;
+#endif
       }
       break;
     }
@@ -26091,6 +26136,7 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
       break;
     }
     case 350: { // Sunny Flight entrance control
+      #if GAME_VER == VER_NTSC_U
       Moby350Props *props = moby->m_Props;
 
       if (props->m_0x08 == 0) {
@@ -26145,6 +26191,7 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
         break;
       }
       }
+      #endif
       break;
     }
     case 353: { // Flight arches
@@ -29010,6 +29057,7 @@ void NAME_OVERLAY_FUNCTION(UpdateMoby)(void) {
       }
       break;
     }
+    case 365 ... 369:
     case 76:            // Apostrophe
     case 426 ... 451: { // Text A-Z
       MobyLetterProps *letterProps = moby->m_Props;

@@ -1,5 +1,157 @@
 #include "strings.h"
 
+#include <sys/types.h>
+
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+char *StringCompleted = "COMPLETED";
+char *StringQuit_Flight = "QUIT";
+char *StringTimeIsUp = "TIME IS UP";
+char *StringCrashed = "CRASHED";
+char *StringAllInOne = "ALL IN ONE";
+char *StringTotal = "TOTAL";
+char *StringPressButton = "PRESS   BUTTON";
+int StringPressButton_ButtonIndex = 6;
+char *StringTryAgain = "TRY AGAIN?";
+char *StringYes_Flight = "YES";
+char *StringNo_Flight = "NO";
+char *StringTimeAttack = "TIME ATTACK";
+char *StringBestTime = "BEST TIME";
+char *StringYourTime = "YOUR TIME";
+char *StringNewRecord = "NEW RECORD";
+const char StringCopters[] = "COPTERS";
+const char StringBoats[] = "BOATS";
+const char StringLights[] = "LIGHTS";
+const char StringRings[] = "RINGS";
+const char StringChests[] = "CHESTS";
+const char StringPlanes[] = "PLANES";
+const char StringArches[] = "ARCHES";
+const char StringBarrels[] = "BARRELS";
+char g_GameOverTextRot[8] = {107, 96, 85, 78, 50, 43, 32, 21};
+short g_GameOverRotY = 176;
+short g_GameOverRotZ = 1024;
+short g_GameOverSkyboxRotY = 0x0F50;
+short g_GameOverSkyboxRotZ = 0x0884;
+u_char g_GameOverLetterDisplayTicks[8] = {0, 8, 16, 24, 72, 80, 88, 96};
+char *StringPressStart = "PRESS START";
+u_char StringPressStartX = 174;
+char *StringInTheWorldOfDragons = "IN THE WORLD OF DRAGONS...";
+u_char StringInTheWorldOfDragonsX = 81;
+u_char StringInTheWorldOfDragonsRevealTick = 140;
+char *StringTheAdventureBegins = "THE ADVENTURE BEGINS...";
+u_char StringTheAdventureBeginsX = 102;
+u_char StringTheAdventureBeginsRevealTick = 143;
+char *StringTheAdventureContinues = "THE ADVENTURE CONTINUES...";
+u_char StringTheAdventureContinuesX = 81;
+u_char StringTheAdventureContinuesRevealTick = 140;
+char *StringEnteringDemoMode = "ENTERING DEMO MODE...";
+u_char StringEnteringDemoModeX = 116;
+u_char StringEnteringDemoModeRevealTick = 145;
+char *StringDemoMode = "DEMO MODE";
+u_char StringDemoModeX = 191;
+char *StringReturningHome = "RETURNING HOME...";
+u_char StringReturningHomeX = 127;
+char *StringConfronting = "CONFRONTING";
+char *StringEntering_Level = "ENTERING";
+char *StringEntering_World = "ENTERING";
+char *StringWorld = "WORLD";
+char *StringEnteringGnastysWorld = "ENTERING GNASTY'S WORLD";
+char *StringTreasureFound = "TREASURE FOUND";
+u_char StringTreasureFoundXOffset = 70;
+char *StringTotalTreasure = "TOTAL TREASURE";
+u_char StringTotalTreasureXOffset = 54;
+char *StringPaused = "PAUSED";
+u_char StringPausedX = 186;
+char *StringContinue_Pause = "CONTINUE";
+u_char StringContinue_PauseX = 199;
+char *StringOptions = "OPTIONS";
+u_char StringOptionsX = 207;
+char *StringInventory = "INVENTORY";
+u_char StringInventoryX = 191;
+char *StringQuit_Pause = "QUIT";
+u_char StringQuit_PauseX = 231;
+char *StringExitLevel = "EXIT LEVEL";
+u_char StringExitLevelX = 183;
+char *StringQuitGame = "QUIT GAME";
+u_char StringQuitGameX = 191;
+char *StringSoundEffects = "SOUND EFFECTS";
+u_char StringSoundEffectsX = 112;
+char *StringMusicVolume = "MUSIC VOLUME";
+u_char StringMusicVolumeX = 126;
+char *StringSpeakerSetup = "SPEAKER SETUP";
+u_char StringSpeakerSetupX = 112;
+char *StringVibration = "VIBRATION";
+u_char StringVibrationX = 168;
+char *StringCamera = "CAMERA";
+u_char StringCameraX = 213;
+char *StringScreenAdjust = "SCREEN ADJUST";
+u_char StringScreenAdjustX = 168;
+char *StringHorizontal = "HORIZONTAL";
+u_char StringHorizontalX = 143;
+char *StringVertical = "VERTICAL";
+u_char StringVerticalX = 173;
+char *StringDone = "DONE";
+u_char StringDoneX = 234;
+char *StringOn = "ON";
+char *StringOff = "OFF";
+char *StringStereo = "STEREO";
+char *StringMono = "MONO";
+char *StringActive = "ACTIVE";
+char *StringPassive = "PASSIVE";
+char *StringYes_Pause = "YES";
+u_char StringYes_PauseX = 192;
+char *StringNo_Pause = "NO";
+u_char StringNo_PauseX = 40;
+char *StringHiSpyro = "HI SPYRO,";
+char *StringSaveGame = "SAVE GAME";
+char *StringReplayDragon = "REPLAY DRAGON";
+char *StringContinue_Fairy = "CONTINUE";
+char *StringNoSaveFile = "NO SAVE FILE";
+u_char StringNoSaveFileXOffset = 62;
+char *StringPleaseRestartWith = "PLEASE RESTART WITH";
+u_char StringPleaseRestartWithXOffset = 16;
+char *StringAMemoryCardTo = "A MEMORY CARD TO";
+u_char StringAMemoryCardToXOffset = 37;
+char *StringEnableSaveGames = "ENABLE SAVE GAMES";
+u_char StringEnableSaveGamesXOffset = 30;
+char *StringSaving = "SAVING...";
+u_char StringSavingXOffset = 64;
+char *StringNoMemoryCard = "NO MEMORY CARD";
+u_char StringNoMemoryCardXOffset = 51;
+char *StringPleaseReplace = "PLEASE REPLACE";
+u_char StringPleaseReplaceXOffset = 49;
+char *StringTheSpyro = "THE SPYRO";
+u_char StringTheSpyroXOffset = 84;
+char *StringMemoryCard = "MEMORY CARD.";
+u_char StringMemoryCardXOffset = 63;
+char *StringSaveError = "SAVE ERROR";
+u_char StringSaveErrorXOffset = 63;
+char *StringPleaseCheckThat = "PLEASE CHECK THAT";
+u_char StringPleaseCheckThatXOffset = 16;
+char *StringTheMemoryCard = "THE MEMORY CARD";
+u_char StringTheMemoryCardXOffset = 30;
+char *StringIsStillInPlace = "IS STILL IN PLACE";
+u_char StringIsStillInPlaceXOffset = 16;
+char *StringSaveFailed = "SAVE FAILED";
+u_char StringSaveFailedXOffset = 51;
+char *StringRetry = "RETRY";
+u_char StringRetryXOffset = 92;
+char *StringAbort = "ABORT";
+u_char StringAbortXOffset = 92;
+char *StringSaveSuccessful = "SAVE SUCCESSFUL";
+u_char StringSaveSuccessfulXOffset = 23;
+char *StringMemoryCard1 = "MEMORY CARD 1";
+char *StringMemoryCard2 = "MEMORY CARD 2";
+u_char StringMemoryCard2Width = 169;
+char *StringTheBalloonist = "THE BALLOONIST";
+char *StringWhereToSpyro = "WHERE TO, SPYRO?";
+char *StringNeedALift = "NEED A LIFT?";
+char *StringAreYouReadyToGo = "ARE YOU READY TO GO?";
+char *StringWouldYouLikeToGo = "WOULD YOU LIKE TO GO?";
+char *StringGoTo = "GO TO ";
+char *StringStayHere = "STAY HERE";
+char *StringRescued = "RESCUED";
+#endif
+
 /* Dragon names */
 char *g_DragonNames[80] = {
     "SILVUS",  /* Index 0 (Unused) */
@@ -84,17 +236,20 @@ char *g_DragonNames[80] = {
     "DRAGON X", /* Index 79 */
 };
 
-char *g_HomeworldNames[7] = {
+char *g_HomeworldNames[] = {
     "ARTISANS",       /**/
     "PEACE KEEPERS",  /**/
     "MAGIC CRAFTERS", /**/
     "BEAST MAKERS",   /**/
     "DREAM WEAVERS",  /**/
     "GNASTY'S WORLD", /**/
+#if GAME_VER == VER_NTSC_U
     "THIGH MASTERS"   /**/
+#endif
 };
 
 // Length is in Mobys, so spaces aren't included
+#if GAME_VER == VER_NTSC_U || defined(NON_MATCHING)
 char g_HomeworldNamesLength[7] = {
     sizeof("ARTISANS") - 1,      /**/
     sizeof("PEACEKEEPERS") - 1,  /**/
@@ -105,8 +260,10 @@ char g_HomeworldNamesLength[7] = {
     sizeof("THIGHMASTERS") - 1,  /**/
 };
 
+#endif
+
 // Level name table
-char *g_LevelNames[37] = {
+char *g_LevelNames[] = {
     /* Artisans */
     "HOME",         /**/
     "STONE HILL",   /**/
@@ -153,7 +310,9 @@ char *g_LevelNames[37] = {
     "TWILIGHT HARBOR", /**/
     "GNASTY GNORC",    /**/
     "GNASTY'S LOOT",   /**/
+#if GAME_VER == VER_NTSC_U
     "A",               /* Placeholder for flight level */
+#endif
 
     /* Entry 36 */
     "RETURN HOME" /**/
@@ -173,6 +332,7 @@ char *g_BalloonistNames[6] = {
 
 #define IDX(idx) (idx * 3)
 
+#if GAME_VER == VER_NTSC_U || defined(NON_MATCHING)
 char g_BalloonistDialogueIndices[40] = {
     IDX(0),  IDX(1),  IDX(2),  IDX(3),  IDX(4),  IDX(5),  IDX(6),  IDX(7),
     IDX(8),  IDX(9),  IDX(10), IDX(11), IDX(12), IDX(13), IDX(14), IDX(15),
@@ -180,14 +340,24 @@ char g_BalloonistDialogueIndices[40] = {
     IDX(24), IDX(25), IDX(26), IDX(27), IDX(28), IDX(29), IDX(30), IDX(30),
     IDX(30), IDX(30), IDX(31), IDX(32), IDX(33), IDX(34), IDX(35), IDX(36)};
 
+#endif
+
 #undef IDX
 
 char *g_BalloonistDialogue[] = {
     // 0
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    "THERE ARE MANY MORE", "WORLDS FOR YOU TO", "EXPLORE, SPYRO.",
+#else
     "IF YOU PROVE YOUR", "WORTH BY RESCUING", "10 DRAGONS...",
+#endif
 
     // 1
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    "I CAN TAKE YOU TO SEE THEM", "IN THE FULL VERSION OF", "SPYRO THE DRAGON.",
+#else
     "THEN YOU MAY USE", "THIS BALLOON TO FLY", "TO A NEW WORLD.",
+#endif
 
     // 2
     "COME BACK TO SEE ME", "AFTER YOU HAVE", "RESCUED 10 DRAGONS.",
@@ -205,10 +375,18 @@ char *g_BalloonistDialogue[] = {
     "THE MAGIC CRAFTERS", "WORLD IS FAR AWAY", "AND VERY DANGEROUS.",
 
     // 7
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    "MAYBE IF YOU FIND", "1200 STOLEN TREASURES", "I'LL SHOW IT TO YOU.",
+#else
     "MAYBE IF YOU FIND", "1200 STOLEN TREASURE", "I'LL SHOW IT TO YOU.",
+#endif
 
     // 8
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    "I'M STILL WAITING", "FOR YOU TO FIND", "1200 STOLEN TREASURES.",
+#else
     "I'M STILL WAITING", "FOR YOU TO FIND THAT", "1200 STOLEN TREASURE.",
+#endif
 
     // 9
     "I CAN'T BELIEVE HOW", "FAST YOU FOUND SO", "MUCH STOLEN TREASURE.",
@@ -259,10 +437,18 @@ char *g_BalloonistDialogue[] = {
     "I'M TIRED OF RENTING", "BALLOONS. THE FAIRIES", "GET ALL THE GOOD JOBS.",
 
     // 25
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    "COME SEE ME AGAIN WHEN", "YOU HAVE RECOVERED", "6000 STOLEN TREASURES.",
+#else
     "COME SEE ME AGAIN WHEN", "YOU HAVE RECOVERED", "6000 STOLEN TREASURE.",
+#endif
 
     // 26
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    "I'M STILL WAITING", "FOR YOU TO FIND", "6000 STOLEN TREASURES.",
+#else
     "I'M STILL WAITING", "FOR YOU TO FIND THAT", "6000 STOLEN TREASURE.",
+#endif
 
     // 27
     "NICE JOB COLLECTING SO", "MUCH STOLEN TREASURE.", "BUT BEWARE, SPYRO.",
@@ -289,7 +475,11 @@ char *g_BalloonistDialogue[] = {
     "I BET YOU WOULD DO", "WELL TO HUNT FOR EGGS", "ON WIZARD PEAK.",
 
     // 35
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    "THE ENTRANCE PORTAL", "IS JUST UP THE HILL", "BEHIND YOU"
+#else
     "THE ENTRANCE PORTAL", "IS JUST UP THE HILL", "BEHIND YOU."
+#endif
 
     /**/
 };

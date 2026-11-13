@@ -10,5 +10,7 @@ dlabel __ra_temp
 dlabel D_80075648
 /* 65E48 80075648 */ .space 0x10
 
+.if GAME_VER == VER_NTSC_U
 dlabel D_80075658
 /* 65E58 80075658 */ .space 0x10
+.endif

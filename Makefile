@@ -3,6 +3,11 @@
 # -------------------------------
 # Compiler & Toolchain Setup
 # -------------------------------
+VER_NTSC_U = 0
+VER_C3_DEMO_NTSC_U = 1
+GAME_VER ?= $(VER_NTSC_U)
+VERSION_CPP_FLAGS = -DGAME_VER=$(GAME_VER) -include include/versions.h
+
 NOCD_FLAG          = $(if ${NOCD},-DNOCD,-DNNOCD)
 DEBUG_FLAG          = $(if ${DEBUG},-DDEBUG,-DNDEBUG)
 MODERN_COMPILER_FLAG = $(if ${MODERN_COMPILER},-DMODERN_COMPILER,-D_HAS_MASPSX)
@@ -29,19 +34,27 @@ C_MODERN_FLAGS = -Os -G 0 -g3 -fverbose-asm -mips1 -march=r3000 -mabi=32 -mno-ll
 C_FLAGS   = $(if ${MODERN_COMPILER},$(C_MODERN_FLAGS),$(C_CLASSIC_FLAGS))
 AS_FLAGS  = -EL -Iinclude -Iasm -Iasm/renderers -march=r3000 -mtune=r3000 -no-pad-sections -G0 -ggdb -msoft-float
 
+AS_FLAGS += --defsym GAME_VER=$(GAME_VER) \
+            --defsym VER_NTSC_U=$(VER_NTSC_U) \
+            --defsym VER_C3_DEMO_NTSC_U=$(VER_C3_DEMO_NTSC_U)
 # -------------------------------
 # Targets & Sources
 # -------------------------------
 TARGET_ELF = build/psx.elf
 TARGET_EXE = build/PSX.EXE
+CHECKSUMS = sha256sum.txt
 
-OVERLAYS    = $(shell $(PYTHON) tools/overlays/get_overlays.py)
-OVERLAY_OBJ = $(shell $(PYTHON) tools/overlays/get_overlay_objects.py)
+OVERLAY_CPP = $(GCC) -E -P -x assembler-with-cpp $(VERSION_CPP_FLAGS)
+OVERLAYS    = $(shell $(OVERLAY_CPP) overlays/overlays.yaml | $(PYTHON) tools/overlays/get_overlays.py)
+OVERLAY_OBJ = $(shell $(OVERLAY_CPP) overlays/overlays.yaml | $(PYTHON) tools/overlays/get_overlay_objects.py)
 OVERLAY_LD  = build/overlays.ld
 TARGET_OVERLAYS = $(patsubst %, build/wad/%.ovl, $(OVERLAYS))
 
 SRC_C  = $(wildcard src/*.c) $(wildcard src/gamestates/*.c)
 SRC_S  = $(shell find asm -type f -name '*.s')
+ifeq ($(GAME_VER),$(VER_C3_DEMO_NTSC_U))
+CHECKSUMS = sha256sum_c3_demo.txt
+endif
 
 OBJ_C  = $(SRC_C:src/%.c=build/src/%.o)
 OBJ_S  = $(SRC_S:asm/%.s=build/asm/%.o)
@@ -55,6 +68,15 @@ DEPENDS = $(OBJ_C:.o=.o.d) $(OVERLAY_OBJ:.o=.o.d)
 # -------------------------------
 # Directories Setup
 # -------------------------------
+$(OBJ_C) $(OBJ_S) $(OVERLAY_OBJ): build/.game_ver
+
+.PHONY: force_game_ver
+force_game_ver:
+
+build/.game_ver: force_game_ver
+	@mkdir -p build
+	@if [ "$$(cat $@ 2>/dev/null)" != "$(GAME_VER)" ]; then printf '%s\n' "$(GAME_VER)" > $@; fi
+
 $(OBJ_C) $(OVERLAY_OBJ) $(OVERLAY_LD): | create_dirs
 
 create_dirs:
@@ -66,13 +88,22 @@ create_dirs:
 
 all: $(TARGET_OVERLAYS) $(TARGET_EXE)
 	@echo "\e[0;32m[Verifying] SHA-256 checksums...\e[0m"
-	@sha256sum -c sha256sum.txt
+	@sha256sum -c $(CHECKSUMS)
 
 non_matching: $(TARGET_OVERLAYS) $(TARGET_EXE)
 
 # -------------------------------
 # Compilation
 # -------------------------------
+
+build/asm/data/sony_text.o: assets/sony_text.databin.bin
+
+build/asm/renderers/r_cyclorama.o build/asm/renderers/r_environment.o \
+build/asm/renderers/r_moby.o build/asm/renderers/r_particles.o: include/render_constants.inc
+
+ifeq ($(GAME_VER),$(VER_C3_DEMO_NTSC_U))
+build/asm/data/sony_text.o: assets/sony_text_eu.databin.bin
+endif
 
 # Only use MASPSX for non-modern compilers
 MASPSX_COMMAND = $(if ${MODERN_COMPILER},,$(PYTHON) $(MASPSX) -G4 --aspsx-version 2.56 --expand-div |)
@@ -83,7 +114,7 @@ build/src/overlays/%.o: C_FLAGS := $(subst -G8,-G0,$(C_FLAGS))
 # Strip overlay functions based on the classes they're configured to include
 build/src/overlays/%/moby_spawn.o     build/src/overlays/%/moby_update.o:     STRIP_CLASSES = moby
 build/src/overlays/%/particle_spawn.o build/src/overlays/%/particle_update.o: STRIP_CLASSES = particle
-OVERLAY_STRIP = $(if $(STRIP_CLASSES),$(PYTHON) tools/overlays/strip_overlay_function.py "$$($(PYTHON) tools/overlays/get_overlay_$(STRIP_CLASSES)_classes.py $*)" |)
+OVERLAY_STRIP = $(if $(STRIP_CLASSES),$(PYTHON) tools/overlays/strip_overlay_function.py "$$($(OVERLAY_CPP) overlays/$(STRIP_CLASSES)s.yaml | $(PYTHON) tools/overlays/get_overlay_$(STRIP_CLASSES)_classes.py $*)" |)
 
 # Because the yaml files change the overlay behavior
 # we have to depend on them so changes in the file are reflected in the objects
@@ -95,7 +126,7 @@ OVERLAY_YAML_particle_update = overlays/particles.yaml
 define OVERLAY_SOURCE
 build/src/overlays/%/$(1).o: src/overlays/$(1).c $(OVERLAY_YAML_$(1))
 	@echo "\e[0;36m[Compiling/$$*] $$< \e[0m"
-	@$$(GCC) -DOVERLAY_NAME=$$* -DIS_$$* $$(MODERN_COMPILER_FLAG) $$(NEW_PSYQ_FLAG) $$(DEBUG_FLAG) $$(NON_MATCHING_FLAG) -Iinclude -Ipsyq/include -ffreestanding -MT $$@ -MMD -MP -MF $$@.d $$< | \
+	@$$(GCC) $(VERSION_CPP_FLAGS) -DOVERLAY_NAME=$$* -DIS_$$* $$(MODERN_COMPILER_FLAG) $$(NEW_PSYQ_FLAG) $$(DEBUG_FLAG) $$(NON_MATCHING_FLAG) -Iinclude -Ipsyq/include -ffreestanding -MT $$@ -MMD -MP -MF $$@.d $$< | \
 		$$(OVERLAY_STRIP) \
 		$$(CC) $$(C_FLAGS) | \
 		$$(MASPSX_COMMAND) \
@@ -108,7 +139,7 @@ $(foreach src,$(basename $(notdir $(wildcard src/overlays/*.c))),$(eval $(call O
 build/src/%.o: src/%.c
 	@echo "\e[0;36m[Compiling] $<\e[0m"
 
-	@$(GCC) $(MODERN_COMPILER_FLAG) $(NEW_PSYQ_FLAG) $(DEBUG_FLAG) $(NON_MATCHING_FLAG) -Iinclude -Ipsyq/include -ffreestanding -MT $@ -MMD -MP -MF $@.d $< | \
+	@$(GCC) $(VERSION_CPP_FLAGS) $(MODERN_COMPILER_FLAG) $(NEW_PSYQ_FLAG) $(DEBUG_FLAG) $(NON_MATCHING_FLAG) -Iinclude -Ipsyq/include -ffreestanding -MT $@ -MMD -MP -MF $@.d $< | \
 		$(CC) $(C_FLAGS) |\
 		$(MASPSX_COMMAND) \
 		$(PYTHON) $(REMOVE_SECTIONS) | \
@@ -134,9 +165,9 @@ $(TARGET_EXE): $(TARGET_ELF)
 	@$(OBJCOPY) --only-section=.header --only-section=.main -O binary $< $@
 
 # Overlay linker script from the yaml
-$(OVERLAY_LD): overlays/overlays.yaml tools/overlays/generate_overlay_ld.py tools/overlays/get_overlay_objects.py
+$(OVERLAY_LD): build/.game_ver overlays/overlays.yaml tools/overlays/generate_overlay_ld.py tools/overlays/get_overlay_objects.py
 	@echo "\e[0;32m[Generating] $@\e[0m"
-	@$(PYTHON) tools/overlays/generate_overlay_ld.py > $@
+	@$(OVERLAY_CPP) overlays/overlays.yaml | $(PYTHON) tools/overlays/generate_overlay_ld.py > $@
 
 # The overlays themselves
 define OVERLAY_RULE
@@ -152,4 +183,4 @@ $(foreach overlay, $(OVERLAYS), $(eval $(call OVERLAY_RULE,$(overlay))))
 # -------------------------------
 clean:
 	@echo "\e[0;31m[Cleaning] Removing build artifacts...\e[0m"
-	@rm -f $(OBJ_C) $(OVERLAY_OBJ) $(OBJ_S) $(DEPENDS) $(OVERLAY_LD) $(TARGET_ELF) $(TARGET_EXE) $(TARGET_OVERLAYS)
+	@rm -f $(OBJ_C) $(OVERLAY_OBJ) $(OBJ_S) $(DEPENDS) build/.game_ver $(OVERLAY_LD) $(TARGET_ELF) $(TARGET_EXE) $(TARGET_OVERLAYS)

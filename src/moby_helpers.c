@@ -17,6 +17,7 @@
 #include "spyro.h"
 #include "strings.h"
 #include "variables.h"
+#include "vector.h"
 
 extern unsigned int strlen(char *);
 
@@ -668,6 +669,10 @@ int func_80039398(Moby *pMoby, int distance, int mobyCollisionRadius,
       return 2;
     }
     VecCopy(&newPos, &g_CollisionPoint);
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    ColSphere(&newPos, collisionRadius, collisionRadius);
+    VecCopy(&newPos, &g_CollisionPoint);
+#endif
   }
 
   if (flags & 0x1) {
@@ -729,6 +734,9 @@ int MobyMove(Moby *pMoby, int angle, int distance, int mobyCollisionRadius,
              int collisionRadius, int flags) {
   Vector3D newPos;
   int floorZ;
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  int result = 0;
+#endif
 
   if (D_800756C4 == 3) {
     distance = distance + (distance >> 1);
@@ -759,6 +767,11 @@ int MobyMove(Moby *pMoby, int angle, int distance, int mobyCollisionRadius,
       return 2;
     }
     VecCopy(&newPos, &g_CollisionPoint);
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    ColSphere(&newPos, collisionRadius, collisionRadius);
+    VecCopy(&newPos, &g_CollisionPoint);
+    result = 4;
+#endif
   }
 
   if (flags & 0x10 || flags & 0x4) {
@@ -795,7 +808,11 @@ int MobyMove(Moby *pMoby, int angle, int distance, int mobyCollisionRadius,
   }
 
   func_800529E4(pMoby, UPDATE_PROP_CHAIN);
+#if GAME_VER == VER_NTSC_U
   return 0;
+#else
+  return result;
+#endif
 }
 
 /**
@@ -849,6 +866,15 @@ int MobyMoveWithGravity(Moby *pMoby, int *pHorizontalSpeed, int pAngle,
     // Horizontal movement with collision detection
     result = MobyMove(pMoby, pAngle, *pHorizontalSpeed, mobyCollisionRadius,
                       500, flags);
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+    if (result == 4) {
+      int surfaceangle = Atan2(g_CollisionNormal.z, VecMagnitude(&g_CollisionNormal, 0), 0);
+      if (surfaceangle > ROTDEG8(50) && surfaceangle <= ROTDEG8(310) && *pHorizontalSpeed > 0) {
+        *pHorizontalSpeed = *pHorizontalSpeed * 3 / 4;
+      }
+    }
+
+#endif
     *pHorizontalSpeed -= pDeceleration;
     if (*pHorizontalSpeed < 0) {
       *pHorizontalSpeed = 0;
@@ -2282,7 +2308,15 @@ int func_8003BFC0(Moby *pMoby, PathData *pPath, Vector3D *pPreviousMovement,
 
 // Create portal text
 void func_8003C358(Moby *pMoby, int pIsLevelName) {
+#if GAME_VER >= VER_C3_DEMO_NTSC_U
+  int byteLength;
+  int j;
+#endif
+#if GAME_VER == VER_NTSC_U
   char const *level_name;
+#else
+  char *level_name;
+#endif
   Moby *char_moby;
   Vector3D *pos;
   Vector3D vec1;
@@ -2300,7 +2334,11 @@ void func_8003C358(Moby *pMoby, int pIsLevelName) {
     level_name = g_LevelNames[*(int *)(pMoby->m_Props)];
     z_rot = pMoby->m_Rotation.z;
   } else {
+#if GAME_VER == VER_NTSC_U
     level_name = g_LevelNames[36]; //"RETURN HOME"
+#else
+    level_name = g_LevelNames[35];
+#endif
     z_rot = Atan2(g_Spyro.m_Position.x - pMoby->m_Position.x,
                   g_Spyro.m_Position.y - pMoby->m_Position.y, 0);
   }
@@ -2311,7 +2349,11 @@ void func_8003C358(Moby *pMoby, int pIsLevelName) {
 
   if (pIsLevelName != 0) {
     if (pMoby->m_Substate == 0) {
+#if GAME_VER == VER_NTSC_U
       z_rot = pMoby->m_Rotation.z + 128;
+#else
+      z_rot = pMoby->m_Rotation.z - 128;
+#endif
     } else {
       z_rot = pMoby->m_Rotation.z;
       VecNull(&vec3);
@@ -2320,7 +2362,18 @@ void func_8003C358(Moby *pMoby, int pIsLevelName) {
     }
   }
 
+#if GAME_VER == VER_NTSC_U
   string_len = strlen((char *)level_name);
+#else
+  byteLength = 0;
+  string_len = 0;
+  for (j = 0; level_name[j] != '\0'; j++) {
+    byteLength++;
+    if (!(level_name[j] >= 'a' && level_name[j] <= 'z')) {
+      string_len++;
+    }
+  }
+#endif
 
   VecMult(&vec3, &vec2, string_len - 1);
 
@@ -2333,10 +2386,16 @@ void func_8003C358(Moby *pMoby, int pIsLevelName) {
   setXYZ(&vec4, vec1.x * Cos(textBowAngle << 4),
          vec1.y * Cos(textBowAngle << 4), 0);
 
+#if GAME_VER == VER_NTSC_U
   for (i = 0; i < string_len; textBowAngle -= 4, ++i) {
     character = level_name[i];
+#else
+  for (i = 0, j = 0; j < byteLength; textBowAngle -= 4, ++j, ++i) {
+    character = level_name[j];
+#endif
 
     if (character != ' ') { // Skip spaces
+#if GAME_VER == VER_NTSC_U
       char_moby_class = character;
 
       if (character >= 'A' && character <= 'Z') {
@@ -2347,6 +2406,18 @@ void func_8003C358(Moby *pMoby, int pIsLevelName) {
       }
 
       char_moby = (*g_SpawnMoby)(char_moby_class, pMoby);
+#else
+      if (character >= 'A' && character <= 'Z') {
+        char_moby = (*g_SpawnMoby)(character - 'A' + MOBYCLASS_LETTER_A, pMoby);
+      } else if (character >= 'a' && character <= 'z') {
+        i--;
+        VecAdd(&vec3, &vec3, &vec2);
+        textBowAngle += 4;
+        char_moby = (*g_SpawnMoby)(level_name[j] + 0x10C, pMoby);
+      } else {
+        char_moby = (*g_SpawnMoby)(MOBYCLASS_LETTER_APOSTROPHE, pMoby);
+      }
+#endif
       setMobyLetterProps((MobyLetterProps *)char_moby->m_Props, pMoby, i,
                          string_len);
       pos = &char_moby->m_Position;
